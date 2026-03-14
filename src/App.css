@@ -764,6 +764,465 @@ body {
   font-size: 0.8rem;
 }
 
+/* ── Auth Bar ────────────────────────────────────────────────────── */
+
+.auth-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.auth-bar.logged-in {
+  gap: 0.75rem;
+}
+
+.auth-user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.auth-avatar {
+  font-size: 1.2rem;
+}
+
+.auth-name {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.auth-wallets,
+.auth-nfts {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.btn-twitch {
+  background: #9146ff;
+  color: white;
+  font-weight: 600;
+}
+
+.btn-twitch:hover {
+  background: #a970ff;
+  box-shadow: 0 0 15px rgba(145, 70, 255, 0.4);
+}
+
+.btn-sm {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #ff4757;
+}
+
+/* ── Wallet Manager ──────────────────────────────────────────────── */
+
+.wallet-manager {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.wallet-manager h3 {
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+}
+
+.wallet-info-text {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-bottom: 0.75rem;
+}
+
+.wallet-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.wallet-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-surface);
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.wallet-chain {
+  background: var(--accent);
+  color: white;
+  padding: 0.1rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.wallet-label {
+  font-weight: 600;
+}
+
+.wallet-address {
+  color: var(--text-muted);
+  font-family: monospace;
+  font-size: 0.8rem;
+  flex: 1;
+}
+
+.wallet-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--bg-surface);
+  border-radius: 8px;
+}
+
+.wallet-select,
+.wallet-input {
+  padding: 0.5rem;
+  background: var(--bg-dark);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.85rem;
+}
+
+.wallet-add-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* ── Filter Bar ──────────────────────────────────────────────────── */
+
+.filter-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* ── Progression Display ─────────────────────────────────────────── */
+
+.progression-display {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.progression-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.progression-header h4 {
+  font-size: 0.8rem;
+  color: var(--accent-glow);
+}
+
+.progression-total {
+  font-size: 0.7rem;
+  color: var(--success);
+  font-weight: 600;
+}
+
+.progression-races {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.progression-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.progression-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.7rem;
+}
+
+.prog-label {
+  width: 75px;
+  text-transform: capitalize;
+  color: var(--text-muted);
+}
+
+.prog-bar-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.prog-level-bar {
+  height: 4px;
+  background: var(--bg-dark);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.prog-level-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+.prog-xp-bar {
+  height: 2px;
+  background: var(--bg-dark);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.prog-xp-fill {
+  height: 100%;
+  border-radius: 1px;
+  transition: width 0.3s ease;
+}
+
+.prog-value {
+  width: 30px;
+  text-align: right;
+  font-weight: 600;
+  color: var(--success);
+}
+
+.prog-maxed {
+  color: var(--gold);
+  font-weight: 700;
+  font-size: 0.65rem;
+}
+
+/* ── Race Lobby ──────────────────────────────────────────────────── */
+
+.race-lobby {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.lobby-header h2 {
+  margin-bottom: 0.5rem;
+}
+
+.lobby-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.lobby-status {
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+}
+
+.lobby-status.waiting {
+  background: rgba(255, 234, 167, 0.15);
+  color: var(--warning);
+}
+
+.lobby-status.countdown {
+  background: rgba(255, 107, 107, 0.15);
+  color: var(--danger);
+  animation: pulse 1s ease infinite;
+}
+
+.lobby-status.racing {
+  background: rgba(85, 239, 196, 0.15);
+  color: var(--success);
+}
+
+.lobby-status.finished {
+  background: rgba(162, 155, 254, 0.15);
+  color: var(--accent-glow);
+}
+
+.lobby-count {
+  color: var(--text-muted);
+}
+
+.lobby-timer {
+  color: var(--accent-glow);
+  font-weight: 600;
+  font-family: monospace;
+}
+
+.lobby-error {
+  background: rgba(255, 107, 107, 0.15);
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.lobby-rules {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: var(--bg-surface);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* ── Lobby Entries ───────────────────────────────────────────────── */
+
+.lobby-entries {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.lobby-entries h3 {
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+}
+
+.lobby-entry-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.lobby-entry-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-surface);
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.lobby-entry-card.mine {
+  border: 1px solid var(--accent);
+  background: rgba(108, 92, 231, 0.1);
+}
+
+.entry-name {
+  flex: 1;
+  font-weight: 600;
+}
+
+.entry-power {
+  color: var(--gold);
+  font-size: 0.8rem;
+}
+
+.lobby-empty {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 1rem;
+}
+
+/* ── Lobby NFT Selection ─────────────────────────────────────────── */
+
+.lobby-select {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.lobby-select h3 {
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+}
+
+.lobby-nft-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+.lobby-nft-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.75rem;
+  background: var(--bg-surface);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  text-align: center;
+  transition: all 0.2s;
+  opacity: 0.5;
+}
+
+.lobby-nft-card.available {
+  opacity: 1;
+  cursor: pointer;
+}
+
+.lobby-nft-card.available:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.lobby-nft-card.entered {
+  opacity: 1;
+  border-color: var(--success);
+  background: rgba(85, 239, 196, 0.1);
+}
+
+.lobby-nft-avatar {
+  font-size: 2rem;
+}
+
+.lobby-nft-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.lobby-nft-power {
+  font-size: 0.7rem;
+  color: var(--gold);
+}
+
+.lobby-nft-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--success);
+  background: rgba(85, 239, 196, 0.15);
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+}
+
+/* ── Result highlighting ─────────────────────────────────────────── */
+
+.result-mine {
+  border: 1px solid var(--accent);
+  background: rgba(108, 92, 231, 0.15) !important;
+}
+
 /* ── Responsive ──────────────────────────────────────────────────── */
 
 @media (max-width: 768px) {
@@ -776,6 +1235,25 @@ body {
   .nav-links {
     flex-wrap: wrap;
     justify-content: center;
+  }
+
+  .auth-bar {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .lobby-status-bar {
+    flex-wrap: wrap;
+    font-size: 0.8rem;
+  }
+
+  .lobby-rules {
+    flex-wrap: wrap;
+    font-size: 0.75rem;
+  }
+
+  .lobby-nft-grid {
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
   }
 
   .main-content {

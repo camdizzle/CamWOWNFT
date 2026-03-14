@@ -1,81 +1,56 @@
-import { useState } from "react";
 import type { NFTCharacter, RaceResult } from "../types/nft";
-import { CharacterCard } from "../components/CharacterCard";
-import { RaceTrack } from "../components/RaceTrack";
-import { RaceSchedule } from "../components/RaceSchedule";
+import type { AuthState } from "../hooks/useAuth";
+import type { UseProgressionResult } from "../hooks/useProgression";
+import { RaceLobbyComponent } from "../components/RaceLobby";
 
 interface RacePageProps {
   characters: NFTCharacter[];
+  auth: AuthState;
+  progression: UseProgressionResult;
   onUpdateLeaderboard: (results: RaceResult[]) => void;
 }
 
-export function RacePage({ characters, onUpdateLeaderboard }: RacePageProps) {
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [showRace, setShowRace] = useState(false);
+export function RacePage({ characters, auth, progression, onUpdateLeaderboard }: RacePageProps) {
+  // Apply progression to get effective characters for racing
+  const effectiveCharacters = characters.map((c) => progression.getEffectiveCharacter(c));
 
-  function toggleSelection(id: string) {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else if (next.size < 8) {
-        next.add(id);
+  function handleRaceComplete(results: RaceResult[], _racerIds: string[]) {
+    // Apply stat progression for each racer
+    for (const result of results) {
+      const baseChar = characters.find((c) => c.id === result.characterId);
+      if (baseChar) {
+        const gains = progression.applyRaceResult(
+          result.characterId,
+          baseChar.stats, // use BASE stats, not effective
+          result.placement
+        );
+        // Could show a toast/notification for level-ups here
+        if (gains.some((g) => g.leveledUp)) {
+          console.log(
+            `${baseChar.name} leveled up!`,
+            gains.filter((g) => g.leveledUp)
+          );
+        }
       }
-      return next;
-    });
-  }
+    }
 
-  const selectedCharacters = characters.filter((c) => selectedIds.has(c.id));
-
-  function handleRaceComplete(results: RaceResult[]) {
     onUpdateLeaderboard(results);
   }
 
   return (
     <div className="page race-page">
       <div className="page-header">
-        <h1>🏁 Marble Racing</h1>
+        <h1>🏁 Marble Racing League</h1>
         <p className="subtitle">
-          Select 2-8 characters to enter the race
+          Races every 4 hours — minimum 6 racers to start — max 2 NFTs per user
         </p>
       </div>
 
-      <RaceSchedule />
-
-      {!showRace ? (
-        <>
-          <div className="selection-bar">
-            <span>{selectedIds.size} / 8 selected</span>
-            {selectedIds.size >= 2 && (
-              <button className="btn btn-primary" onClick={() => setShowRace(true)}>
-                Enter Race →
-              </button>
-            )}
-          </div>
-
-          <div className="character-grid compact-grid">
-            {characters.map((char) => (
-              <CharacterCard
-                key={char.id}
-                character={char}
-                compact
-                selected={selectedIds.has(char.id)}
-                onClick={() => toggleSelection(char.id)}
-              />
-            ))}
-          </div>
-        </>
-      ) : (
-        <>
-          <button className="btn btn-secondary" onClick={() => setShowRace(false)}>
-            ← Back to Selection
-          </button>
-          <RaceTrack
-            characters={selectedCharacters}
-            onRaceComplete={handleRaceComplete}
-          />
-        </>
-      )}
+      <RaceLobbyComponent
+        characters={effectiveCharacters}
+        auth={auth}
+        onRaceComplete={handleRaceComplete}
+      />
     </div>
   );
 }

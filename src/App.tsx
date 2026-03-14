@@ -1,6 +1,9 @@
 import { useState, useCallback } from "react";
 import type { SeasonEntry, RaceResult, BattleResult } from "./types/nft";
 import { SAMPLE_COLLECTION } from "./data/sampleCollection";
+import { useAuth } from "./hooks/useAuth";
+import { useProgression } from "./hooks/useProgression";
+import { AuthBar } from "./components/AuthBar";
 import { CollectionPage } from "./pages/CollectionPage";
 import { RacePage } from "./pages/RacePage";
 import { BattlePage } from "./pages/BattlePage";
@@ -23,6 +26,8 @@ function initLeaderboard(): SeasonEntry[] {
 function App() {
   const [page, setPage] = useState<Page>("collection");
   const [leaderboard, setLeaderboard] = useState<SeasonEntry[]>(initLeaderboard);
+  const auth = useAuth();
+  const progression = useProgression();
 
   const handleRaceResults = useCallback((results: RaceResult[]) => {
     setLeaderboard((prev) => {
@@ -90,15 +95,22 @@ function App() {
             🏆 Leaderboard
           </button>
         </div>
+        <AuthBar auth={auth} />
       </nav>
 
       <main className="main-content">
         {page === "collection" && (
-          <CollectionPage characters={SAMPLE_COLLECTION} />
+          <CollectionPage
+            characters={SAMPLE_COLLECTION}
+            auth={auth}
+            progression={progression}
+          />
         )}
         {page === "race" && (
           <RacePage
             characters={SAMPLE_COLLECTION}
+            auth={auth}
+            progression={progression}
             onUpdateLeaderboard={handleRaceResults}
           />
         )}

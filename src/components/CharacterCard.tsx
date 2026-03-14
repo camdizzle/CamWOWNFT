@@ -1,19 +1,25 @@
 import type { NFTCharacter } from "../types/nft";
 import { STAT_KEYS } from "../types/nft";
+import type { CharacterProgression } from "../engines/progression";
 import { StatBar } from "./StatBar";
+import { ProgressionDisplay } from "./ProgressionDisplay";
 
 interface CharacterCardProps {
   character: NFTCharacter;
+  progression?: CharacterProgression;
   selected?: boolean;
   onClick?: () => void;
   compact?: boolean;
+  showProgression?: boolean;
 }
 
 export function CharacterCard({
   character,
+  progression,
   selected,
   onClick,
   compact,
+  showProgression,
 }: CharacterCardProps) {
   return (
     <div
@@ -48,6 +54,10 @@ export function CharacterCard({
                 <StatBar key={key} stat={key} value={character.stats[key]} />
               ))}
             </div>
+
+            {showProgression && progression && (
+              <ProgressionDisplay character={character} progression={progression} />
+            )}
           </>
         )}
       </div>

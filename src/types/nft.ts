@@ -87,6 +87,48 @@ export interface Battle {
   timestamp: number;
 }
 
+// ── Auth & Wallet Types ────────────────────────────────────────────────
+
+export interface TwitchUser {
+  id: string;
+  login: string;
+  displayName: string;
+  profileImageUrl: string;
+}
+
+export interface WalletConnection {
+  address: string;
+  chain: "solana" | "ethereum" | "polygon";
+  label?: string; // user-friendly name like "Main Wallet"
+}
+
+export interface UserAccount {
+  twitchUser: TwitchUser;
+  wallets: WalletConnection[];
+  ownedNftIds: string[]; // aggregated across all wallets
+}
+
+// ── Race Lobby Types ───────────────────────────────────────────────────
+
+export type LobbyStatus = "waiting" | "countdown" | "racing" | "finished";
+
+export interface LobbyEntry {
+  characterId: string;
+  userId: string; // twitch user ID — for enforcing per-user limits
+  readyAt: number;
+}
+
+export interface RaceLobby {
+  id: string;
+  scheduledTime: number; // the original 4-hour slot
+  deadlineTime: number; // extends if < 6 racers
+  status: LobbyStatus;
+  entries: LobbyEntry[];
+  minEntries: number; // 6
+  maxEntries: number; // 16
+  maxPerUser: number; // 2
+}
+
 // ── Season & Leaderboard ───────────────────────────────────────────────
 
 export interface SeasonEntry {
