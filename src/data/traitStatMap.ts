@@ -7,247 +7,324 @@ interface StatModifier {
   value: number;
 }
 
+// ── Trait Tier Reference ────────────────────────────────────────────────
+//
+//   S-tier  →  +4 primary, +1 secondary   (Legendary / 1-of-1)
+//   A-tier  →  +3 primary, +1 secondary   (Rare)
+//   B-tier  →  +2 primary                 (Uncommon)
+//   C-tier  →  +1 primary                 (Common)
+//
+// Empty slots (no trait) contribute nothing — this is the main driver
+// of the power gap between common and legendary NFTs.
+
 // ── Master Trait → Stat Mapping ────────────────────────────────────────
-// Each trait_type has a map of possible values → stat bonuses.
-// Extend this as your collection grows.
+// CamWOW Series 1 real traits.  11 trait categories.
 
 export const TRAIT_STAT_MAP: Record<string, Record<string, StatModifier[]>> = {
   // ─── Skin / Body ───────────────────────────────────────────────────
   Skin: {
-    Diamond: [
-      { stat: "toughness", value: 5 },
-      { stat: "charisma", value: 2 },
-    ],
-    Gold: [
+    "Solid Gold": [
       { stat: "charisma", value: 4 },
-      { stat: "luck", value: 3 },
+      { stat: "luck", value: 1 },
     ],
-    Silver: [
-      { stat: "toughness", value: 3 },
-      { stat: "charisma", value: 2 },
-    ],
-    Bronze: [
-      { stat: "toughness", value: 2 },
-      { stat: "stamina", value: 2 },
+    Diamond: [
+      { stat: "toughness", value: 4 },
+      { stat: "charisma", value: 1 },
     ],
     Obsidian: [
-      { stat: "toughness", value: 4 },
+      { stat: "toughness", value: 3 },
       { stat: "agility", value: 1 },
     ],
     Crystal: [
       { stat: "luck", value: 3 },
-      { stat: "charisma", value: 3 },
+      { stat: "charisma", value: 1 },
     ],
     Lava: [
       { stat: "toughness", value: 3 },
-      { stat: "speed", value: 2 },
+    ],
+    Silver: [
+      { stat: "toughness", value: 2 },
+      { stat: "charisma", value: 1 },
     ],
     Ice: [
-      { stat: "agility", value: 3 },
-      { stat: "toughness", value: 2 },
+      { stat: "agility", value: 2 },
+      { stat: "toughness", value: 1 },
     ],
     Neon: [
-      { stat: "speed", value: 3 },
-      { stat: "charisma", value: 2 },
+      { stat: "speed", value: 2 },
+      { stat: "charisma", value: 1 },
     ],
+    Bronze: [
+      { stat: "toughness", value: 2 },
+    ],
+    OG: [{ stat: "charisma", value: 1 }],
     Default: [{ stat: "toughness", value: 1 }],
   },
 
   // ─── Eyes / Eyewear ────────────────────────────────────────────────
   Eyes: {
-    Sunglasses: [
-      { stat: "charisma", value: 5 },
+    "Cyborg Eyes": [
+      { stat: "speed", value: 4 },
       { stat: "luck", value: 1 },
     ],
     "Laser Eyes": [
       { stat: "speed", value: 3 },
-      { stat: "toughness", value: 2 },
+      { stat: "toughness", value: 1 },
     ],
-    "3D Glasses": [
-      { stat: "luck", value: 3 },
-      { stat: "agility", value: 2 },
-    ],
-    Monocle: [
-      { stat: "charisma", value: 4 },
-      { stat: "luck", value: 2 },
-    ],
-    Visor: [
-      { stat: "speed", value: 3 },
-      { stat: "agility", value: 2 },
-    ],
-    Goggles: [
-      { stat: "stamina", value: 3 },
-      { stat: "toughness", value: 2 },
-    ],
-    "Heart Eyes": [
-      { stat: "charisma", value: 4 },
+    Sunglasses: [
+      { stat: "charisma", value: 3 },
       { stat: "luck", value: 1 },
     ],
-    "Glowing Eyes": [
-      { stat: "luck", value: 3 },
+    "3D Glasses": [
+      { stat: "luck", value: 2 },
+      { stat: "agility", value: 1 },
+    ],
+    Monocle: [
       { stat: "charisma", value: 2 },
     ],
+    Visor: [
+      { stat: "speed", value: 2 },
+    ],
+    "Heart Eyes": [
+      { stat: "charisma", value: 1 },
+    ],
+    "Wide Eyes": [
+      { stat: "luck", value: 1 },
+    ],
+    Squint: [{ stat: "agility", value: 1 }],
     Default: [{ stat: "charisma", value: 1 }],
   },
 
   // ─── Headwear ──────────────────────────────────────────────────────
   Headwear: {
-    Crown: [
-      { stat: "charisma", value: 5 },
-      { stat: "luck", value: 3 },
-    ],
-    Helmet: [
-      { stat: "toughness", value: 5 },
-      { stat: "stamina", value: 2 },
-    ],
-    "Baseball Cap": [
-      { stat: "agility", value: 3 },
-      { stat: "speed", value: 2 },
-    ],
-    Beanie: [
-      { stat: "stamina", value: 3 },
+    "Bronze Crown": [
+      { stat: "charisma", value: 4 },
       { stat: "luck", value: 1 },
     ],
-    Halo: [
-      { stat: "luck", value: 5 },
-      { stat: "charisma", value: 2 },
+    "Diamond Tiara": [
+      { stat: "luck", value: 4 },
+      { stat: "charisma", value: 1 },
     ],
-    Horns: [
+    Helmet: [
       { stat: "toughness", value: 3 },
-      { stat: "speed", value: 2 },
+      { stat: "stamina", value: 1 },
+    ],
+    Halo: [
+      { stat: "luck", value: 3 },
+      { stat: "charisma", value: 1 },
+    ],
+    "Baseball Cap": [
+      { stat: "agility", value: 2 },
+    ],
+    Beanie: [
+      { stat: "stamina", value: 2 },
     ],
     Bandana: [
-      { stat: "agility", value: 3 },
-      { stat: "charisma", value: 2 },
+      { stat: "agility", value: 2 },
     ],
-    "Top Hat": [
-      { stat: "charisma", value: 4 },
-      { stat: "luck", value: 2 },
+    "Backwards Cap": [
+      { stat: "speed", value: 1 },
     ],
-    Mohawk: [
-      { stat: "speed", value: 3 },
-      { stat: "charisma", value: 2 },
-    ],
+    None: [],
     Default: [{ stat: "stamina", value: 1 }],
   },
 
   // ─── Clothing / Outfit ────────────────────────────────────────────
   Clothing: {
+    "Gold Armor": [
+      { stat: "toughness", value: 4 },
+      { stat: "charisma", value: 1 },
+    ],
     Armor: [
-      { stat: "toughness", value: 5 },
-      { stat: "stamina", value: 3 },
-    ],
-    Cape: [
-      { stat: "speed", value: 3 },
-      { stat: "charisma", value: 3 },
-    ],
-    Hoodie: [
-      { stat: "agility", value: 3 },
-      { stat: "stamina", value: 2 },
+      { stat: "toughness", value: 3 },
+      { stat: "stamina", value: 1 },
     ],
     Suit: [
-      { stat: "charisma", value: 5 },
-      { stat: "luck", value: 2 },
+      { stat: "charisma", value: 3 },
+      { stat: "luck", value: 1 },
+    ],
+    Cape: [
+      { stat: "speed", value: 2 },
+      { stat: "charisma", value: 1 },
+    ],
+    Hoodie: [
+      { stat: "agility", value: 2 },
     ],
     Jersey: [
-      { stat: "speed", value: 3 },
-      { stat: "stamina", value: 3 },
+      { stat: "speed", value: 2 },
     ],
-    "Lab Coat": [
-      { stat: "luck", value: 3 },
-      { stat: "stamina", value: 2 },
-    ],
-    Leather: [
-      { stat: "toughness", value: 3 },
-      { stat: "charisma", value: 2 },
-    ],
-    Robe: [
-      { stat: "luck", value: 4 },
-      { stat: "stamina", value: 2 },
+    "Plain Tee": [
+      { stat: "stamina", value: 1 },
     ],
     Tank: [
-      { stat: "speed", value: 2 },
-      { stat: "agility", value: 3 },
+      { stat: "speed", value: 1 },
     ],
+    None: [],
     Default: [{ stat: "stamina", value: 1 }],
   },
 
   // ─── Accessories ───────────────────────────────────────────────────
   Accessory: {
-    Chain: [
-      { stat: "charisma", value: 3 },
-      { stat: "luck", value: 2 },
-    ],
-    Shield: [
-      { stat: "toughness", value: 5 },
-      { stat: "stamina", value: 1 },
-    ],
-    Sword: [
-      { stat: "speed", value: 3 },
-      { stat: "toughness", value: 3 },
-    ],
-    Wand: [
-      { stat: "luck", value: 4 },
-      { stat: "charisma", value: 2 },
-    ],
-    Skateboard: [
-      { stat: "speed", value: 4 },
-      { stat: "agility", value: 3 },
-    ],
-    Guitar: [
-      { stat: "charisma", value: 5 },
+    "Diamond Chain": [
+      { stat: "charisma", value: 4 },
       { stat: "luck", value: 1 },
     ],
-    Watch: [
+    "Gold Watch": [
       { stat: "luck", value: 3 },
-      { stat: "speed", value: 2 },
+      { stat: "charisma", value: 1 },
+    ],
+    Skateboard: [
+      { stat: "speed", value: 3 },
+      { stat: "agility", value: 1 },
+    ],
+    Shield: [
+      { stat: "toughness", value: 2 },
+    ],
+    Chain: [
+      { stat: "charisma", value: 2 },
     ],
     Backpack: [
-      { stat: "stamina", value: 4 },
-      { stat: "agility", value: 2 },
+      { stat: "stamina", value: 2 },
     ],
+    Wristband: [
+      { stat: "stamina", value: 1 },
+    ],
+    None: [],
     Default: [{ stat: "luck", value: 1 }],
   },
 
   // ─── Background ───────────────────────────────────────────────────
   Background: {
-    Space: [
+    "420": [
+      { stat: "luck", value: 4 },
+      { stat: "charisma", value: 1 },
+    ],
+    Galaxy: [
       { stat: "luck", value: 3 },
-      { stat: "speed", value: 2 },
+      { stat: "speed", value: 1 },
+    ],
+    Space: [
+      { stat: "luck", value: 2 },
+      { stat: "speed", value: 1 },
     ],
     Fire: [
-      { stat: "toughness", value: 3 },
-      { stat: "speed", value: 2 },
+      { stat: "toughness", value: 2 },
     ],
     Ocean: [
-      { stat: "stamina", value: 3 },
-      { stat: "agility", value: 2 },
-    ],
-    Forest: [
-      { stat: "agility", value: 3 },
       { stat: "stamina", value: 2 },
     ],
     City: [
-      { stat: "charisma", value: 2 },
-      { stat: "speed", value: 2 },
+      { stat: "charisma", value: 1 },
+      { stat: "speed", value: 1 },
+    ],
+    Forest: [
+      { stat: "agility", value: 2 },
     ],
     Desert: [
-      { stat: "stamina", value: 4 },
-      { stat: "toughness", value: 1 },
-    ],
-    Arctic: [
-      { stat: "toughness", value: 3 },
       { stat: "stamina", value: 2 },
     ],
-    Neon: [
-      { stat: "charisma", value: 3 },
-      { stat: "luck", value: 2 },
+    Plain: [{ stat: "luck", value: 1 }],
+    Default: [{ stat: "luck", value: 1 }],
+  },
+
+  // ─── Mouth / Expression ───────────────────────────────────────────
+  Mouth: {
+    "Gold Grill": [
+      { stat: "charisma", value: 4 },
+      { stat: "luck", value: 1 },
     ],
-    Galaxy: [
-      { stat: "luck", value: 4 },
+    "Diamond Grill": [
+      { stat: "charisma", value: 3 },
+      { stat: "toughness", value: 1 },
+    ],
+    Cigar: [
+      { stat: "toughness", value: 2 },
+    ],
+    Smirk: [
+      { stat: "charisma", value: 1 },
+    ],
+    Grin: [
+      { stat: "luck", value: 1 },
+    ],
+    Neutral: [{ stat: "stamina", value: 1 }],
+    None: [],
+    Default: [],
+  },
+
+  // ─── Facial Hair ──────────────────────────────────────────────────
+  "Facial Hair": {
+    "Gold Mustache": [
+      { stat: "charisma", value: 3 },
+      { stat: "luck", value: 1 },
+    ],
+    "Full Beard": [
+      { stat: "toughness", value: 2 },
+      { stat: "charisma", value: 1 },
+    ],
+    Goatee: [
       { stat: "charisma", value: 2 },
     ],
-    Default: [{ stat: "luck", value: 1 }],
+    Stubble: [
+      { stat: "toughness", value: 1 },
+    ],
+    None: [],
+    Default: [],
+  },
+
+  // ─── Ear Accessories ──────────────────────────────────────────────
+  Ears: {
+    "Diamond Studs": [
+      { stat: "luck", value: 3 },
+      { stat: "charisma", value: 1 },
+    ],
+    "Gold Hoops": [
+      { stat: "charisma", value: 2 },
+      { stat: "luck", value: 1 },
+    ],
+    AirPods: [
+      { stat: "speed", value: 2 },
+    ],
+    Studs: [
+      { stat: "charisma", value: 1 },
+    ],
+    None: [],
+    Default: [],
+  },
+
+  // ─── Tattoos / Body Art ───────────────────────────────────────────
+  Tattoo: {
+    "Full Sleeve": [
+      { stat: "toughness", value: 3 },
+      { stat: "charisma", value: 1 },
+    ],
+    "Tribal Mark": [
+      { stat: "toughness", value: 2 },
+    ],
+    "Small Ink": [
+      { stat: "charisma", value: 1 },
+    ],
+    None: [],
+    Default: [],
+  },
+
+  // ─── Special / Logos / 1-of-1 ─────────────────────────────────────
+  Special: {
+    "CamWOW Logo": [
+      { stat: "charisma", value: 4 },
+      { stat: "luck", value: 1 },
+    ],
+    "420 Badge": [
+      { stat: "luck", value: 3 },
+      { stat: "charisma", value: 1 },
+    ],
+    "OG Tag": [
+      { stat: "luck", value: 2 },
+    ],
+    Verified: [
+      { stat: "charisma", value: 1 },
+    ],
+    None: [],
+    Default: [],
   },
 };
 
