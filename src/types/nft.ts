@@ -98,7 +98,6 @@ export interface TwitchUser {
 
 export interface WalletConnection {
   address: string;
-  chain: "solana" | "ethereum" | "polygon";
   label?: string; // user-friendly name like "Main Wallet"
 }
 

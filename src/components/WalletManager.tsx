@@ -1,6 +1,5 @@
 import { useState } from "react";
 import type { AuthState } from "../hooks/useAuth";
-import type { WalletConnection } from "../types/nft";
 
 interface WalletManagerProps {
   auth: AuthState;
@@ -9,7 +8,6 @@ interface WalletManagerProps {
 export function WalletManager({ auth }: WalletManagerProps) {
   const [showAdd, setShowAdd] = useState(false);
   const [newAddress, setNewAddress] = useState("");
-  const [newChain, setNewChain] = useState<WalletConnection["chain"]>("solana");
   const [newLabel, setNewLabel] = useState("");
 
   if (!auth.user) return null;
@@ -18,7 +16,6 @@ export function WalletManager({ auth }: WalletManagerProps) {
     if (!newAddress.trim()) return;
     auth.addWallet({
       address: newAddress.trim(),
-      chain: newChain,
       label: newLabel.trim() || undefined,
     });
     setNewAddress("");
@@ -28,7 +25,7 @@ export function WalletManager({ auth }: WalletManagerProps) {
 
   return (
     <div className="wallet-manager">
-      <h3>Connected Wallets</h3>
+      <h3>Connected Solana Wallets</h3>
       <p className="wallet-info-text">
         All wallets are unified under your Twitch account.
         NFT limits are per Twitch user, not per wallet.
@@ -37,7 +34,7 @@ export function WalletManager({ auth }: WalletManagerProps) {
       <div className="wallet-list">
         {auth.user.wallets.map((w) => (
           <div key={w.address} className="wallet-row">
-            <span className="wallet-chain">{w.chain}</span>
+            <span className="wallet-chain">SOL</span>
             <span className="wallet-label">{w.label || "Wallet"}</span>
             <span className="wallet-address">
               {w.address.slice(0, 6)}...{w.address.slice(-4)}
@@ -54,22 +51,13 @@ export function WalletManager({ auth }: WalletManagerProps) {
 
       {!showAdd ? (
         <button className="btn btn-secondary btn-sm" onClick={() => setShowAdd(true)}>
-          + Add Wallet
+          + Add Solana Wallet
         </button>
       ) : (
         <div className="wallet-add-form">
-          <select
-            value={newChain}
-            onChange={(e) => setNewChain(e.target.value as WalletConnection["chain"])}
-            className="wallet-select"
-          >
-            <option value="solana">Solana</option>
-            <option value="ethereum">Ethereum</option>
-            <option value="polygon">Polygon</option>
-          </select>
           <input
             type="text"
-            placeholder="Wallet address"
+            placeholder="Solana wallet address"
             value={newAddress}
             onChange={(e) => setNewAddress(e.target.value)}
             className="wallet-input"

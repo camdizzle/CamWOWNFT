@@ -90,7 +90,6 @@ export function useAuth(): AuthState {
         // Start with a demo wallet
         {
           address: `demo-wallet-${twitchUser.id}`,
-          chain: "solana",
           label: "Demo Wallet",
         },
       ],
