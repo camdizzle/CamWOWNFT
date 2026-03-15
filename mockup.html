@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CamWOW Arena — Visual Mockup</title>
+<style>
+  :root {
+    --bg-dark: #0a0a1a;
+    --bg-card: #141428;
+    --bg-surface: #1a1a35;
+    --bg-hover: #222250;
+    --border: #2a2a55;
+    --text: #e0e0f0;
+    --text-muted: #8888aa;
+    --accent: #6c5ce7;
+    --accent-glow: #a29bfe;
+    --success: #55efc4;
+    --danger: #ff6b6b;
+    --warning: #ffeaa7;
+    --gold: #ffd700;
+    --silver: #c0c0c0;
+    --bronze: #cd7f32;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg-dark);
+    color: var(--text);
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    min-height: 100vh;
+  }
+
+  /* ── Nav ─────────────────────────────────────────── */
+  .top-nav {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--bg-card);
+    border-bottom: 2px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nav-brand { display: flex; align-items: center; gap: 0.5rem; }
+  .brand-text { font-weight: 800; font-size: 1.15rem; background: linear-gradient(135deg, var(--accent), var(--success)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .nav-links { display: flex; gap: 0.25rem; flex: 1; }
+  .nav-link {
+    padding: 0.5rem 1rem;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.9rem;
+    border-radius: 8px;
+    transition: all 0.2s;
+  }
+  .nav-link:hover { background: var(--bg-hover); color: var(--text); }
+  .nav-link.active { background: var(--accent); color: white; font-weight: 600; }
+
+  .nav-coins {
+    display: flex; align-items: center; gap: 0.3rem;
+    background: rgba(255,215,0,0.1);
+    border: 1px solid rgba(255,215,0,0.3);
+    padding: 0.3rem 0.75rem; border-radius: 20px; font-weight: 700;
+  }
+  .coin-amount { color: var(--gold); font-size: 0.9rem; }
+
+  .auth-bar {
+    display: flex; align-items: center; gap: 0.75rem;
+    background: var(--bg-surface); padding: 0.4rem 0.75rem; border-radius: 8px;
+  }
+  .auth-name { font-weight: 600; font-size: 0.85rem; }
+  .auth-meta { color: var(--text-muted); font-size: 0.75rem; }
+
+  /* ── Main ────────────────────────────────────────── */
+  .main-content { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+  .page-header { margin-bottom: 1.5rem; }
+  .page-header h1 { font-size: 1.6rem; margin-bottom: 0.25rem; }
+  .subtitle { color: var(--text-muted); font-size: 0.9rem; }
+
+  /* ── Tabs ────────────────────────────────────────── */
+  .shop-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+  .shop-tab {
+    padding: 0.6rem 1.5rem; background: var(--bg-card); border: 2px solid var(--border);
+    border-radius: 8px; color: var(--text-muted); cursor: pointer; font-size: 0.95rem; font-weight: 600;
+  }
+  .shop-tab:hover { border-color: var(--accent); color: var(--text); }
+  .shop-tab.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+  /* ── Shop Header ─────────────────────────────────── */
+  .shop-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .shop-header h3 { font-size: 1.1rem; }
+  .shop-balance {
+    display: flex; align-items: center; gap: 0.4rem;
+    background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3);
+    padding: 0.4rem 1rem; border-radius: 20px; font-weight: 700; font-size: 1.1rem; color: var(--gold);
+  }
+
+  /* ── Filters ─────────────────────────────────────── */
+  .shop-filters { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .shop-filter {
+    padding: 0.35rem 0.75rem; background: var(--bg-surface); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text-muted); cursor: pointer; font-size: 0.8rem;
+  }
+  .shop-filter:hover { color: var(--text); border-color: var(--accent); }
+  .shop-filter.active { background: var(--bg-hover); color: var(--text); border-color: var(--accent); }
+
+  /* ── Buff Cards ──────────────────────────────────── */
+  .shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+  .shop-card {
+    background: var(--bg-card); border: 2px solid var(--border); border-radius: 12px;
+    padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem; transition: all 0.2s;
+  }
+  .shop-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+  .shop-card-header { display: flex; align-items: center; justify-content: space-between; }
+  .shop-card-icon { font-size: 1.5rem; }
+  .shop-card-rarity { text-transform: uppercase; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.05em; }
+  .shop-card-name { font-weight: 700; font-size: 0.95rem; }
+  .shop-card-desc { color: var(--text-muted); font-size: 0.8rem; line-height: 1.4; flex: 1; }
+  .shop-card-footer { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem; }
+  .shop-card-cost { font-weight: 700; color: var(--gold); font-size: 0.9rem; }
+  .shop-card-owned { color: var(--success); font-weight: 700; font-size: 0.85rem; }
+
+  .btn { padding: 0.4rem 0.8rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.8rem; }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: #5a4bd4; }
+  .btn-secondary { background: var(--bg-surface); color: var(--text-muted); border: 1px solid var(--border); }
+  .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.75rem; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .shop-card-footer .btn { margin-left: auto; }
+
+  /* ── Inventory ───────────────────────────────────── */
+  .shop-inventory {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem;
+  }
+  .shop-inventory h4 { font-size: 0.95rem; margin-bottom: 0.25rem; }
+  .shop-inventory-hint { color: var(--text-muted); font-size: 0.8rem; margin-bottom: 0.75rem; }
+  .inventory-list { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .inventory-item {
+    display: flex; align-items: center; gap: 0.4rem;
+    padding: 0.4rem 0.75rem; background: var(--bg-surface); border: 1px solid var(--border);
+    border-radius: 8px; font-size: 0.85rem;
+  }
+  .inventory-name { font-weight: 600; }
+  .inventory-qty { color: var(--success); font-weight: 700; }
+
+  /* ── Achievements ────────────────────────────────── */
+  .ach-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+  .ach-summary { display: flex; gap: 1rem; font-size: 0.85rem; }
+  .ach-count { color: var(--accent-glow); font-weight: 600; }
+  .ach-coins-earned { color: var(--gold); font-weight: 600; }
+  .ach-progress-bar { height: 8px; background: var(--bg-card); border-radius: 4px; overflow: hidden; margin-bottom: 1.25rem; }
+  .ach-progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--success)); border-radius: 4px; }
+  .ach-category { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
+  .ach-category-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+  .ach-category-header h4 { font-size: 0.95rem; }
+  .ach-category-count { color: var(--text-muted); font-size: 0.8rem; }
+  .ach-list { display: flex; flex-direction: column; gap: 0.4rem; }
+  .ach-card {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.6rem 0.75rem; background: var(--bg-surface); border-radius: 8px;
+  }
+  .ach-card.locked { opacity: 0.5; }
+  .ach-card.unlocked { border-left: 3px solid var(--success); }
+  .ach-icon { font-size: 1.3rem; min-width: 28px; text-align: center; }
+  .ach-info { flex: 1; display: flex; flex-direction: column; gap: 0.1rem; }
+  .ach-name { font-weight: 600; font-size: 0.85rem; }
+  .ach-desc { color: var(--text-muted); font-size: 0.75rem; }
+  .ach-reward { display: flex; align-items: center; gap: 0.5rem; }
+  .ach-reward-amount { color: var(--gold); font-weight: 600; font-size: 0.8rem; white-space: nowrap; }
+  .ach-check { color: var(--success); font-weight: 900; font-size: 1.1rem; }
+
+  /* ── Lobby Preview ───────────────────────────────── */
+  .race-lobby { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; }
+  .lobby-header h2 { font-size: 1.2rem; margin-bottom: 0.5rem; }
+  .lobby-status-bar { display: flex; align-items: center; gap: 1rem; font-size: 0.85rem; }
+  .lobby-status { padding: 0.2rem 0.6rem; border-radius: 12px; font-weight: 600; font-size: 0.75rem; }
+  .lobby-status.waiting { background: rgba(255,234,167,0.15); color: var(--warning); }
+  .lobby-count { color: var(--text-muted); }
+  .lobby-timer { color: var(--accent-glow); font-weight: 600; }
+  .lobby-entry-card {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.6rem 0.75rem; background: var(--bg-surface); border-radius: 8px;
+    margin-bottom: 0.4rem;
+  }
+  .lobby-entry-card.mine { border-left: 3px solid var(--accent); }
+  .entry-name { font-weight: 600; font-size: 0.85rem; }
+  .entry-power { color: var(--text-muted); font-size: 0.8rem; }
+  .entry-buffs { display: flex; gap: 0.2rem; font-size: 1rem; }
+
+  .buff-picker { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; margin-top: 0.25rem; margin-bottom: 0.5rem; }
+  .buff-picker-label { color: var(--text-muted); font-size: 0.75rem; margin-bottom: 0.5rem; }
+  .buff-picker-grid { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .buff-pick-btn {
+    display: flex; align-items: center; gap: 0.3rem;
+    padding: 0.35rem 0.6rem; background: var(--bg-surface); border: 2px solid var(--border);
+    border-radius: 6px; color: var(--text); cursor: pointer; font-size: 0.8rem;
+  }
+  .buff-pick-btn.selected { background: rgba(85,239,196,0.1); border-color: var(--success); }
+  .buff-pick-name { font-weight: 600; }
+  .buff-pick-qty { color: var(--text-muted); font-size: 0.75rem; }
+
+  /* ── Footer ──────────────────────────────────────── */
+  .app-footer {
+    display: flex; justify-content: space-between; padding: 1rem 1.5rem;
+    color: var(--text-muted); font-size: 0.75rem; border-top: 1px solid var(--border);
+    margin-top: 2rem;
+  }
+
+  /* ── Section Divider ─────────────────────────────── */
+  .mockup-divider {
+    text-align: center; padding: 2rem 0 1rem; color: var(--accent-glow); font-weight: 700;
+    font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em;
+  }
+  .mockup-divider::before, .mockup-divider::after {
+    content: " ─── "; color: var(--border);
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     NAVIGATION BAR
+     ════════════════════════════════════════════════════════════════════ -->
+<nav class="top-nav">
+  <div class="nav-brand">
+    <span>🎮</span>
+    <span class="brand-text">CamWOW Arena</span>
+  </div>
+  <div class="nav-links">
+    <button class="nav-link">🎨 Collection</button>
+    <button class="nav-link">🏁 Race</button>
+    <button class="nav-link">⚔️ Battle</button>
+    <button class="nav-link">🏆 Leaderboard</button>
+    <button class="nav-link active">🛒 Shop</button>
+  </div>
+  <div class="nav-coins">
+    <span>🪙</span>
+    <span class="coin-amount">127</span>
+  </div>
+  <div class="auth-bar">
+    <span>👤</span>
+    <span class="auth-name">CamDizzle</span>
+    <span class="auth-meta">2 wallet(s) · 3 NFTs</span>
+  </div>
+</nav>
+
+<main class="main-content">
+
+  <!-- ════════════════════════════════════════════════════════════
+       SHOP PAGE — BUFF SHOP TAB
+       ════════════════════════════════════════════════════════════ -->
+  <div class="page-header">
+    <h1>🪙 Shop & Achievements</h1>
+    <p class="subtitle">Buy race buffs with coins earned from racing and achievements</p>
+  </div>
+
+  <div class="shop-tabs">
+    <button class="shop-tab active">🛒 Buff Shop</button>
+    <button class="shop-tab">🏅 Achievements (7)</button>
+  </div>
+
+  <div class="shop-header">
+    <h3>Buff Shop</h3>
+    <div class="shop-balance">🪙 127</div>
+  </div>
+
+  <div class="shop-filters">
+    <button class="shop-filter active">All</button>
+    <button class="shop-filter">Common</button>
+    <button class="shop-filter">Uncommon</button>
+    <button class="shop-filter">Rare</button>
+    <button class="shop-filter">Epic</button>
+    <button class="shop-filter">Legendary</button>
+  </div>
+
+  <div class="shop-grid">
+    <div class="shop-card" style="border-color: #55efc4;">
+      <div class="shop-card-header">
+        <span class="shop-card-icon">🚀</span>
+        <span class="shop-card-rarity" style="color: #55efc4;">common</span>
+      </div>
+      <div class="shop-card-name">Nitro Boost</div>
+      <div class="shop-card-desc">+30% speed for one burst at a random point in the race.</div>
+      <div class="shop-card-footer">
+        <span class="shop-card-cost">🪙 30</span>
+        <span class="shop-card-owned">x2</span>
+        <button class="btn btn-primary btn-sm">Buy</button>
+      </div>
+    </div>
+
+    <div class="shop-card" style="border-color: #55efc4;">
+      <div class="shop-card-header">
+        <span class="shop-card-icon">🍌</span>
+        <span class="shop-card-rarity" style="color: #55efc4;">common</span>
+      </div>
+      <div class="shop-card-name">Banana Peel</div>
+      <div class="shop-card-desc">A random opponent hits a slowdown obstacle mid-race.</div>
+      <div class="shop-card-footer">
+        <span class="shop-card-cost">🪙 40</span>
+        <button class="btn btn-primary btn-sm">Buy</button>
+      </div>
+    </div>
+
+    <div class="shop-card" style="border-color: #55efc4;">
+      <div class="shop-card-header">
+        <span class="shop-card-icon">⚡</span>
+        <span class="shop-card-rarity" style="color: #55efc4;">common</span>
+      </div>
+      <div class="shop-card-name">Energy Drink</div>
+      <div class="shop-card-desc">Fatigue point delayed by 20% — stay fast longer.</div>
+      <div class="shop-card-footer">
+        <span class="shop-card-cost">🪙 35</span>
+        <span class="shop-card-owned">x1</span>
+        <button class="btn btn-primary btn-sm">Buy</button>
+      </div>
+    </div>
+
+    <div class="shop-card" style="border-color: #74b9ff;">
+      <div class="shop-card-header">
+        <span class="shop-card-icon">💨</span>
+        <span class="shop-card-rarity" style="color: #74b9ff;">uncommon</span>
+      </div>
+      <div class="shop-card-name">Slipstream</div>
+      <div class="shop-card-desc">+15% speed when within 5% of leader's position.</div>
+      <div class="shop-card-footer">
+        <span class="shop-card-cost">🪙 60</span>
+        <button class="btn btn-primary btn-sm">Buy</button>
+      </div>
+    </div>
+
+    <div class="shop-card" style="border-color: #a29bfe;">
+      <div class="shop-card-header">
+        <span class="shop-card-icon">🎭</span>
+        <span class="shop-card-rarity" style="color: #a29bfe;">rare</span>
+      </div>
+      <div class="shop-card-name">Crowd Frenzy</div>
+      <div class="shop-card-desc">Charisma stat doubled for the race — bigger audience boost.</div>
+      <div class="shop-card-footer">
+        <span class="shop-card-cost">🪙 120</span>
+        <button class="btn btn-secondary btn-sm" disabled>Buy</button>
+      </div>
+    </div>
+
+    <div class="shop-card" style="border-color: #fd79a8;">
+      <div class="shop-card-header">
+        <span class="shop-card-icon">🌋</span>
+        <span class="shop-card-rarity" style="color: #fd79a8;">epic</span>
+      </div>
+      <div class="shop-card-name">Earthquake</div>
+      <div class="shop-card-desc">All opponents get a 1-second freeze at a random tick.</div>
+      <div class="shop-card-footer">
+        <span class="shop-card-cost">🪙 250</span>
+        <button class="btn btn-secondary btn-sm" disabled>Buy</button>
+      </div>
+    </div>
+
+    <div class="shop-card" style="border-color: #ffd700;">
+      <div class="shop-card-header">
+        <span class="shop-card-icon">📸</span>
+        <span class="shop-card-rarity" style="color: #ffd700;">legendary</span>
+      </div>
+      <div class="shop-card-name">Photo Finish</div>
+      <div class="shop-card-desc">If within 0.5s of a better placement, swap into that spot.</div>
+      <div class="shop-card-footer">
+        <span class="shop-card-cost">🪙 500</span>
+        <button class="btn btn-secondary btn-sm" disabled>Buy</button>
+      </div>
+    </div>
+
+    <div class="shop-card" style="border-color: #ffd700;">
+      <div class="shop-card-header">
+        <span class="shop-card-icon">👻</span>
+        <span class="shop-card-rarity" style="color: #ffd700;">legendary</span>
+      </div>
+      <div class="shop-card-name">Ghost Mode</div>
+      <div class="shop-card-desc">Immune to all negative buffs from opponents this race.</div>
+      <div class="shop-card-footer">
+        <span class="shop-card-cost">🪙 400</span>
+        <button class="btn btn-secondary btn-sm" disabled>Buy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inventory -->
+  <div class="shop-inventory">
+    <h4>Your Inventory</h4>
+    <p class="shop-inventory-hint">Equip up to 2 buffs per NFT before a race</p>
+    <div class="inventory-list">
+      <div class="inventory-item" style="border-color: #55efc4;">
+        <span>🚀</span>
+        <span class="inventory-name">Nitro Boost</span>
+        <span class="inventory-qty">x2</span>
+      </div>
+      <div class="inventory-item" style="border-color: #55efc4;">
+        <span>⚡</span>
+        <span class="inventory-name">Energy Drink</span>
+        <span class="inventory-qty">x1</span>
+      </div>
+      <div class="inventory-item" style="border-color: #74b9ff;">
+        <span>🎲</span>
+        <span class="inventory-name">Double Luck</span>
+        <span class="inventory-qty">x1</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       MOCKUP SECTION: ACHIEVEMENTS TAB
+       ════════════════════════════════════════════════════════════ -->
+  <div class="mockup-divider">Achievements Tab Preview</div>
+
+  <div class="ach-header">
+    <h3>Achievements</h3>
+    <div class="ach-summary">
+      <span class="ach-count">7 / 35 unlocked</span>
+      <span class="ach-coins-earned">🪙 280 earned</span>
+    </div>
+  </div>
+  <div class="ach-progress-bar"><div class="ach-progress-fill" style="width: 20%;"></div></div>
+
+  <div class="ach-category">
+    <div class="ach-category-header">
+      <h4>Streamer Participation</h4>
+      <span class="ach-category-count">2 / 5</span>
+    </div>
+    <div class="ach-list">
+      <div class="ach-card unlocked">
+        <span class="ach-icon">📺</span>
+        <div class="ach-info">
+          <span class="ach-name">Stream Hopper</span>
+          <span class="ach-desc">Race in 1 MyStats streamer's lobby.</span>
+        </div>
+        <div class="ach-reward">
+          <span class="ach-reward-amount">🪙 25</span>
+          <span class="ach-check">&#10003;</span>
+        </div>
+      </div>
+      <div class="ach-card unlocked">
+        <span class="ach-icon">🏄</span>
+        <div class="ach-info">
+          <span class="ach-name">Channel Surfer</span>
+          <span class="ach-desc">Race in 3 different MyStats streamers' lobbies.</span>
+        </div>
+        <div class="ach-reward">
+          <span class="ach-reward-amount">🪙 75</span>
+          <span class="ach-check">&#10003;</span>
+        </div>
+      </div>
+      <div class="ach-card locked">
+        <span class="ach-icon">🏗️</span>
+        <div class="ach-info">
+          <span class="ach-name">Community Builder</span>
+          <span class="ach-desc">Race in 5 different MyStats streamers' lobbies.</span>
+        </div>
+        <div class="ach-reward">
+          <span class="ach-reward-amount">🪙 150</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ach-category">
+    <div class="ach-category-header">
+      <h4>Race Count</h4>
+      <span class="ach-category-count">3 / 7</span>
+    </div>
+    <div class="ach-list">
+      <div class="ach-card unlocked">
+        <span class="ach-icon">🏁</span>
+        <div class="ach-info">
+          <span class="ach-name">First Roll</span>
+          <span class="ach-desc">Complete your first race.</span>
+        </div>
+        <div class="ach-reward">
+          <span class="ach-reward-amount">🪙 10</span>
+          <span class="ach-check">&#10003;</span>
+        </div>
+      </div>
+      <div class="ach-card unlocked">
+        <span class="ach-icon">🔟</span>
+        <div class="ach-info">
+          <span class="ach-name">Getting Rolling</span>
+          <span class="ach-desc">Complete 10 races.</span>
+        </div>
+        <div class="ach-reward">
+          <span class="ach-reward-amount">🪙 25</span>
+          <span class="ach-check">&#10003;</span>
+        </div>
+      </div>
+      <div class="ach-card unlocked">
+        <span class="ach-icon">🎯</span>
+        <div class="ach-info">
+          <span class="ach-name">Marble Enthusiast</span>
+          <span class="ach-desc">Complete 25 races.</span>
+        </div>
+        <div class="ach-reward">
+          <span class="ach-reward-amount">🪙 50</span>
+          <span class="ach-check">&#10003;</span>
+        </div>
+      </div>
+      <div class="ach-card locked">
+        <span class="ach-icon">💪</span>
+        <div class="ach-info">
+          <span class="ach-name">Race Veteran</span>
+          <span class="ach-desc">Complete 50 races.</span>
+        </div>
+        <div class="ach-reward">
+          <span class="ach-reward-amount">🪙 100</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ach-category">
+    <div class="ach-category-header">
+      <h4>Wins & Placement</h4>
+      <span class="ach-category-count">2 / 10</span>
+    </div>
+    <div class="ach-list">
+      <div class="ach-card unlocked">
+        <span class="ach-icon">🥇</span>
+        <div class="ach-info">
+          <span class="ach-name">First Victory</span>
+          <span class="ach-desc">Win your first race.</span>
+        </div>
+        <div class="ach-reward">
+          <span class="ach-reward-amount">🪙 20</span>
+          <span class="ach-check">&#10003;</span>
+        </div>
+      </div>
+      <div class="ach-card unlocked">
+        <span class="ach-icon">💍</span>
+        <div class="ach-info">
+          <span class="ach-name">Always the Bridesmaid</span>
+          <span class="ach-desc">Finish 2nd place 3 times.</span>
+        </div>
+        <div class="ach-reward">
+          <span class="ach-reward-amount">🪙 30</span>
+          <span class="ach-check">&#10003;</span>
+        </div>
+      </div>
+      <div class="ach-card locked">
+        <span class="ach-icon">🔥</span>
+        <div class="ach-info">
+          <span class="ach-name">Hot Streak</span>
+          <span class="ach-desc">Win 3 races in a row.</span>
+        </div>
+        <div class="ach-reward">
+          <span class="ach-reward-amount">🪙 75</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       MOCKUP SECTION: RACE LOBBY WITH BUFF PICKER
+       ════════════════════════════════════════════════════════════ -->
+  <div class="mockup-divider">Race Lobby with Buff Selection</div>
+
+  <div class="race-lobby">
+    <div class="lobby-header">
+      <h2>🏁 Marble Racing League</h2>
+      <div class="lobby-status-bar">
+        <span class="lobby-status waiting">Waiting for Racers</span>
+        <span class="lobby-count">4 / 6 min</span>
+        <span class="lobby-timer">12:34</span>
+      </div>
+    </div>
+
+    <div style="margin-top: 1rem;">
+      <h3 style="font-size: 0.95rem; margin-bottom: 0.5rem;">Entered (4)</h3>
+
+      <!-- My entry with buff picker open -->
+      <div>
+        <div class="lobby-entry-card mine">
+          <span class="entry-name">CamWOW #042</span>
+          <span class="entry-power">⚔️ 118</span>
+          <span class="entry-buffs">🚀 ⚡</span>
+          <button class="btn btn-secondary btn-sm">Buffs (2/2)</button>
+          <button class="btn btn-sm" style="background: var(--danger); color: white;">Withdraw</button>
+        </div>
+        <div class="buff-picker">
+          <div class="buff-picker-label">Select up to 2 buffs (consumed on race start)</div>
+          <div class="buff-picker-grid">
+            <button class="buff-pick-btn selected">
+              <span>🚀</span>
+              <span class="buff-pick-name">Nitro Boost</span>
+              <span class="buff-pick-qty">x2</span>
+            </button>
+            <button class="buff-pick-btn selected">
+              <span>⚡</span>
+              <span class="buff-pick-name">Energy Drink</span>
+              <span class="buff-pick-qty">x1</span>
+            </button>
+            <button class="buff-pick-btn" style="opacity: 0.4;">
+              <span>🎲</span>
+              <span class="buff-pick-name">Double Luck</span>
+              <span class="buff-pick-qty">x1</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- My second entry -->
+      <div>
+        <div class="lobby-entry-card mine">
+          <span class="entry-name">CamWOW #017</span>
+          <span class="entry-power">⚔️ 105</span>
+          <button class="btn btn-secondary btn-sm">Add Buffs</button>
+          <button class="btn btn-sm" style="background: var(--danger); color: white;">Withdraw</button>
+        </div>
+      </div>
+
+      <!-- Other players -->
+      <div class="lobby-entry-card">
+        <span class="entry-name">CamWOW #089</span>
+        <span class="entry-power">⚔️ 112</span>
+      </div>
+      <div class="lobby-entry-card">
+        <span class="entry-name">CamWOW #003</span>
+        <span class="entry-power">⚔️ 97</span>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer class="app-footer">
+  <span>CamWOW Series 1 | LaunchMyNFT</span>
+  <span>Season 1 Active</span>
+</footer>
+
+</body>
+</html>
