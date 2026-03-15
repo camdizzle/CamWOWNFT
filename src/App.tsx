@@ -3,14 +3,16 @@ import type { SeasonEntry, RaceResult, BattleResult } from "./types/nft";
 import { SAMPLE_COLLECTION } from "./data/sampleCollection";
 import { useAuth } from "./hooks/useAuth";
 import { useProgression } from "./hooks/useProgression";
+import { useEconomy } from "./hooks/useEconomy";
 import { AuthBar } from "./components/AuthBar";
 import { CollectionPage } from "./pages/CollectionPage";
 import { RacePage } from "./pages/RacePage";
 import { BattlePage } from "./pages/BattlePage";
 import { LeaderboardPage } from "./pages/LeaderboardPage";
+import { ShopPage } from "./pages/ShopPage";
 import "./App.css";
 
-type Page = "collection" | "race" | "battle" | "leaderboard";
+type Page = "collection" | "race" | "battle" | "leaderboard" | "shop";
 
 function initLeaderboard(): SeasonEntry[] {
   return SAMPLE_COLLECTION.map((c) => ({
@@ -28,6 +30,7 @@ function App() {
   const [leaderboard, setLeaderboard] = useState<SeasonEntry[]>(initLeaderboard);
   const auth = useAuth();
   const progression = useProgression();
+  const economy = useEconomy();
 
   const handleRaceResults = useCallback((results: RaceResult[]) => {
     setLeaderboard((prev) => {
@@ -94,7 +97,19 @@ function App() {
           >
             🏆 Leaderboard
           </button>
+          <button
+            className={`nav-link ${page === "shop" ? "active" : ""}`}
+            onClick={() => setPage("shop")}
+          >
+            🛒 Shop
+          </button>
         </div>
+        {auth.isLoggedIn && (
+          <div className="nav-coins">
+            <span className="coin-icon">🪙</span>
+            <span className="coin-amount">{economy.coins}</span>
+          </div>
+        )}
         <AuthBar auth={auth} />
       </nav>
 
@@ -111,6 +126,7 @@ function App() {
             characters={SAMPLE_COLLECTION}
             auth={auth}
             progression={progression}
+            economy={economy}
             onUpdateLeaderboard={handleRaceResults}
           />
         )}
@@ -123,6 +139,7 @@ function App() {
         {page === "leaderboard" && (
           <LeaderboardPage characters={SAMPLE_COLLECTION} leaderboard={leaderboard} />
         )}
+        {page === "shop" && <ShopPage economy={economy} />}
       </main>
 
       <footer className="app-footer">

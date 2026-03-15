@@ -1283,3 +1283,458 @@ body {
     display: none;
   }
 }
+
+/* ── Nav Coin Display ───────────────────────────────────────────── */
+
+.nav-coins {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 700;
+}
+
+.coin-icon {
+  font-size: 1rem;
+}
+
+.coin-amount {
+  color: var(--gold);
+  font-size: 0.9rem;
+}
+
+/* ── Shop Tabs ──────────────────────────────────────────────────── */
+
+.shop-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.shop-tab {
+  padding: 0.6rem 1.5rem;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.shop-tab:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.shop-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+/* ── Buff Shop ──────────────────────────────────────────────────── */
+
+.buff-shop {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.shop-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.shop-header h3 {
+  font-size: 1.1rem;
+}
+
+.shop-balance {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.shop-balance .coin-amount {
+  font-size: 1.1rem;
+}
+
+.shop-message {
+  padding: 0.5rem 1rem;
+  background: rgba(85, 239, 196, 0.15);
+  border: 1px solid var(--success);
+  border-radius: 8px;
+  color: var(--success);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.shop-filters {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.shop-filter {
+  padding: 0.35rem 0.75rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+}
+
+.shop-filter:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.shop-filter.active {
+  background: var(--bg-hover);
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.shop-card {
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.shop-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.shop-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.shop-card-icon {
+  font-size: 1.5rem;
+}
+
+.shop-card-rarity {
+  text-transform: uppercase;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.shop-card-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.shop-card-desc {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.shop-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.shop-card-cost {
+  font-weight: 700;
+  color: var(--gold);
+  font-size: 0.9rem;
+}
+
+.shop-card-owned {
+  color: var(--success);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.shop-card-footer .btn {
+  margin-left: auto;
+}
+
+/* ── Shop Inventory ─────────────────────────────────────────────── */
+
+.shop-inventory {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.shop-inventory h4 {
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+}
+
+.shop-inventory-hint {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-bottom: 0.75rem;
+}
+
+.inventory-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.inventory-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.inventory-icon {
+  font-size: 1.1rem;
+}
+
+.inventory-name {
+  font-weight: 600;
+}
+
+.inventory-qty {
+  color: var(--success);
+  font-weight: 700;
+}
+
+/* ── Achievements Panel ─────────────────────────────────────────── */
+
+.achievements-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.ach-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ach-header h3 {
+  font-size: 1.1rem;
+}
+
+.ach-summary {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.85rem;
+}
+
+.ach-count {
+  color: var(--accent-glow);
+  font-weight: 600;
+}
+
+.ach-coins-earned {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.ach-progress-bar {
+  height: 8px;
+  background: var(--bg-card);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ach-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--success));
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.ach-category {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.ach-category-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.ach-category-header h4 {
+  font-size: 0.95rem;
+}
+
+.ach-category-count {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.ach-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ach-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--bg-surface);
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.ach-card.locked {
+  opacity: 0.5;
+}
+
+.ach-card.unlocked {
+  border-left: 3px solid var(--success);
+}
+
+.ach-icon {
+  font-size: 1.3rem;
+  min-width: 28px;
+  text-align: center;
+}
+
+.ach-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.ach-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.ach-desc {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.ach-reward {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ach-reward-amount {
+  color: var(--gold);
+  font-weight: 600;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.ach-check {
+  color: var(--success);
+  font-weight: 900;
+  font-size: 1.1rem;
+}
+
+/* ── Buff Picker (in Lobby) ─────────────────────────────────────── */
+
+.entry-buffs {
+  display: flex;
+  gap: 0.2rem;
+  font-size: 1rem;
+}
+
+.buff-picker {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.buff-picker-label {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.buff-picker-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.buff-pick-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.6rem;
+  background: var(--bg-surface);
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+}
+
+.buff-pick-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.buff-pick-btn.selected {
+  background: rgba(85, 239, 196, 0.1);
+}
+
+.buff-pick-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.buff-pick-icon {
+  font-size: 1rem;
+}
+
+.buff-pick-name {
+  font-weight: 600;
+}
+
+.buff-pick-qty {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}

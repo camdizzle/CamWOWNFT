@@ -6,6 +6,7 @@ import walletRoutes from "./routes/wallets.js";
 import nftRoutes from "./routes/nfts.js";
 import raceRoutes from "./routes/races.js";
 import progressionRoutes from "./routes/progression.js";
+import economyRoutes from "./routes/economy.js";
 
 dotenv.config();
 
@@ -25,6 +26,7 @@ app.use("/api/wallets", walletRoutes);
 app.use("/api/nfts", nftRoutes);
 app.use("/api/races", raceRoutes);
 app.use("/api/progression", progressionRoutes);
+app.use("/api/economy", economyRoutes);
 
 // ── Health check ───────────────────────────────────────────────────────
 

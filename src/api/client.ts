@@ -104,3 +104,40 @@ export const raceApi = {
 
   getLeaderboard: () => apiFetch<any[]>("/races/leaderboard"),
 };
+
+// ── Economy ─────────────────────────────────────────────────────────────
+
+export const economyApi = {
+  get: (userId: string) =>
+    apiFetch<any>(`/economy/${userId}`),
+
+  addCoins: (userId: string, amount: number) =>
+    apiFetch<{ message: string }>(`/economy/${userId}/coins/add`, {
+      method: "POST",
+      body: JSON.stringify({ amount }),
+    }),
+
+  buyBuff: (userId: string, buffId: string, cost: number) =>
+    apiFetch<{ message: string }>(`/economy/${userId}/buffs/buy`, {
+      method: "POST",
+      body: JSON.stringify({ buffId, cost }),
+    }),
+
+  consumeBuff: (userId: string, buffId: string) =>
+    apiFetch<{ message: string }>(`/economy/${userId}/buffs/consume`, {
+      method: "POST",
+      body: JSON.stringify({ buffId }),
+    }),
+
+  unlockAchievement: (userId: string, achievementId: string, coinReward: number) =>
+    apiFetch<{ message: string }>(`/economy/${userId}/achievements/unlock`, {
+      method: "POST",
+      body: JSON.stringify({ achievementId, coinReward }),
+    }),
+
+  updateStats: (userId: string, stats: any) =>
+    apiFetch<{ message: string }>(`/economy/${userId}/stats`, {
+      method: "POST",
+      body: JSON.stringify(stats),
+    }),
+};

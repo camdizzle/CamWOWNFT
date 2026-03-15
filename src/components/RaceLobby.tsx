@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import type { NFTCharacter, RaceLobby as RaceLobbyType, RaceResult } from "../types/nft";
+import type { ActiveBuff } from "../engines/buffs";
+import { BUFF_CATALOG, RARITY_COLORS, MAX_BUFFS_PER_ENTRY } from "../engines/buffs";
 import {
   createLobby,
   joinLobby,
@@ -14,10 +16,12 @@ import {
 } from "../engines/raceLobby";
 import { createRace, createRaceSimulator } from "../engines/marbleRace";
 import type { AuthState } from "../hooks/useAuth";
+import type { UseEconomyResult } from "../hooks/useEconomy";
 
 interface RaceLobbyProps {
   characters: NFTCharacter[];
   auth: AuthState;
+  economy?: UseEconomyResult;
   onRaceComplete: (results: RaceResult[], racerIds: string[]) => void;
 }
 
@@ -28,7 +32,7 @@ const MARBLE_COLORS = [
   "#fab1a0", "#81ecec", "#ffd93d", "#a29bfe",
 ];
 
-export function RaceLobbyComponent({ characters, auth, onRaceComplete }: RaceLobbyProps) {
+export function RaceLobbyComponent({ characters, auth, economy, onRaceComplete }: RaceLobbyProps) {
   const [lobby, setLobby] = useState<RaceLobbyType>(() =>
     createLobby(getLobbySchedule(1)[0])
   );
@@ -40,6 +44,10 @@ export function RaceLobbyComponent({ characters, auth, onRaceComplete }: RaceLob
   const [error, setError] = useState<string | null>(null);
   const intervalRef = useRef<number | null>(null);
   const raceIntervalRef = useRef<number | null>(null);
+
+  // Buff selection: map characterId -> selected buff IDs (max 2)
+  const [selectedBuffs, setSelectedBuffs] = useState<Record<string, string[]>>({});
+  const [showBuffPicker, setShowBuffPicker] = useState<string | null>(null);
 
   const userId = auth.user?.twitchUser.id ?? "";
   const ownedIds = new Set(auth.user?.ownedNftIds ?? []);
@@ -99,8 +107,19 @@ export function RaceLobbyComponent({ characters, auth, onRaceComplete }: RaceLob
 
     if (racers.length < MIN_ENTRIES) return;
 
+    // Build ActiveBuff array from selected buffs and consume them
+    const raceBuffs: ActiveBuff[] = [];
+    for (const [charId, buffIds] of Object.entries(selectedBuffs)) {
+      for (const buffId of buffIds) {
+        if (economy?.consumeBuff(buffId)) {
+          raceBuffs.push({ buffId, characterId: charId, triggered: false });
+          economy.incrementStat("buffsUsed");
+        }
+      }
+    }
+
     const race = createRace("league-race", "League Race", racers, Date.now());
-    const simulator = createRaceSimulator(race, racers);
+    const simulator = createRaceSimulator(race, racers, undefined, raceBuffs);
 
     setRacing(true);
     setPositions(racers.map((c) => ({ characterId: c.id, position: 0, finished: false })));
@@ -125,6 +144,8 @@ export function RaceLobbyComponent({ characters, auth, onRaceComplete }: RaceLob
         // Reset lobby for next race
         setTimeout(() => {
           setLobby(createLobby(getLobbySchedule(1)[0]));
+          setSelectedBuffs({});
+          setShowBuffPicker(null);
         }, 10000);
       }
     }, 50);
@@ -152,6 +173,23 @@ export function RaceLobbyComponent({ characters, auth, onRaceComplete }: RaceLob
     const newLobby = { ...lobby, entries: [...lobby.entries] };
     leaveLobby(newLobby, characterId);
     setLobby(newLobby);
+    // Clear selected buffs for this character
+    setSelectedBuffs((prev) => {
+      const next = { ...prev };
+      delete next[characterId];
+      return next;
+    });
+  }
+
+  function toggleBuff(characterId: string, buffId: string) {
+    setSelectedBuffs((prev) => {
+      const current = prev[characterId] ?? [];
+      if (current.includes(buffId)) {
+        return { ...prev, [characterId]: current.filter((id) => id !== buffId) };
+      }
+      if (current.length >= MAX_BUFFS_PER_ENTRY) return prev;
+      return { ...prev, [characterId]: [...current, buffId] };
+    });
   }
 
   const userEntryCount = getUserEntryCount(lobby, userId);
@@ -264,17 +302,66 @@ export function RaceLobbyComponent({ characters, auth, onRaceComplete }: RaceLob
               {lobby.entries.map((entry) => {
                 const char = charMap.get(entry.characterId);
                 const isMine = entry.userId === userId;
+                const charBuffs = selectedBuffs[entry.characterId] ?? [];
                 return (
-                  <div key={entry.characterId} className={`lobby-entry-card ${isMine ? "mine" : ""}`}>
-                    <span className="entry-name">{char?.name.split("—")[1] || entry.characterId}</span>
-                    <span className="entry-power">⚔️ {char?.totalPower}</span>
-                    {isMine && (
-                      <button
-                        className="btn btn-danger btn-sm"
-                        onClick={() => handleLeave(entry.characterId)}
-                      >
-                        Withdraw
-                      </button>
+                  <div key={entry.characterId}>
+                    <div className={`lobby-entry-card ${isMine ? "mine" : ""}`}>
+                      <span className="entry-name">{char?.name.split("—")[1] || entry.characterId}</span>
+                      <span className="entry-power">⚔️ {char?.totalPower}</span>
+                      {isMine && charBuffs.length > 0 && (
+                        <span className="entry-buffs">
+                          {charBuffs.map((bId) => {
+                            const def = BUFF_CATALOG.find((b) => b.id === bId);
+                            return def ? <span key={bId} title={def.name}>{def.icon}</span> : null;
+                          })}
+                        </span>
+                      )}
+                      {isMine && economy && economy.inventory.length > 0 && (
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => setShowBuffPicker(
+                            showBuffPicker === entry.characterId ? null : entry.characterId
+                          )}
+                        >
+                          {charBuffs.length > 0 ? `Buffs (${charBuffs.length}/${MAX_BUFFS_PER_ENTRY})` : "Add Buffs"}
+                        </button>
+                      )}
+                      {isMine && (
+                        <button
+                          className="btn btn-danger btn-sm"
+                          onClick={() => handleLeave(entry.characterId)}
+                        >
+                          Withdraw
+                        </button>
+                      )}
+                    </div>
+                    {isMine && showBuffPicker === entry.characterId && economy && (
+                      <div className="buff-picker">
+                        <div className="buff-picker-label">
+                          Select up to {MAX_BUFFS_PER_ENTRY} buffs (consumed on race start)
+                        </div>
+                        <div className="buff-picker-grid">
+                          {economy.inventory.map((item) => {
+                            const def = BUFF_CATALOG.find((b) => b.id === item.buffId);
+                            if (!def) return null;
+                            const isSelected = charBuffs.includes(item.buffId);
+                            const atMax = charBuffs.length >= MAX_BUFFS_PER_ENTRY && !isSelected;
+                            return (
+                              <button
+                                key={item.buffId}
+                                className={`buff-pick-btn ${isSelected ? "selected" : ""}`}
+                                style={{ borderColor: isSelected ? RARITY_COLORS[def.rarity] : undefined }}
+                                disabled={atMax}
+                                onClick={() => toggleBuff(entry.characterId, item.buffId)}
+                              >
+                                <span className="buff-pick-icon">{def.icon}</span>
+                                <span className="buff-pick-name">{def.name}</span>
+                                <span className="buff-pick-qty">x{item.quantity}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
                     )}
                   </div>
                 );

@@ -1,16 +1,18 @@
 import type { NFTCharacter, RaceResult } from "../types/nft";
 import type { AuthState } from "../hooks/useAuth";
 import type { UseProgressionResult } from "../hooks/useProgression";
+import type { UseEconomyResult } from "../hooks/useEconomy";
 import { RaceLobbyComponent } from "../components/RaceLobby";
 
 interface RacePageProps {
   characters: NFTCharacter[];
   auth: AuthState;
   progression: UseProgressionResult;
+  economy: UseEconomyResult;
   onUpdateLeaderboard: (results: RaceResult[]) => void;
 }
 
-export function RacePage({ characters, auth, progression, onUpdateLeaderboard }: RacePageProps) {
+export function RacePage({ characters, auth, progression, economy, onUpdateLeaderboard }: RacePageProps) {
   // Apply progression to get effective characters for racing
   const effectiveCharacters = characters.map((c) => progression.getEffectiveCharacter(c));
 
@@ -21,14 +23,27 @@ export function RacePage({ characters, auth, progression, onUpdateLeaderboard }:
       if (baseChar) {
         const gains = progression.applyRaceResult(
           result.characterId,
-          baseChar.stats, // use BASE stats, not effective
+          baseChar.stats,
           result.placement
         );
-        // Could show a toast/notification for level-ups here
         if (gains.some((g) => g.leveledUp)) {
           console.log(
             `${baseChar.name} leveled up!`,
             gains.filter((g) => g.leveledUp)
+          );
+        }
+      }
+    }
+
+    // Process coin rewards for the user's entries
+    const ownedIds = new Set(auth.user?.ownedNftIds ?? []);
+    for (const result of results) {
+      if (ownedIds.has(result.characterId)) {
+        const reward = economy.processRaceReward(result.placement);
+        if (reward.newAchievements.length > 0) {
+          console.log(
+            "New achievements!",
+            reward.newAchievements.map((a) => a.achievement.name)
           );
         }
       }
@@ -49,6 +64,7 @@ export function RacePage({ characters, auth, progression, onUpdateLeaderboard }:
       <RaceLobbyComponent
         characters={effectiveCharacters}
         auth={auth}
+        economy={economy}
         onRaceComplete={handleRaceComplete}
       />
     </div>

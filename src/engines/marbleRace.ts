@@ -1,4 +1,5 @@
 import type { NFTCharacter, Race, RaceEntry, RaceResult } from "../types/nft";
+import type { ActiveBuff } from "./buffs";
 
 // ── Marble Racing Engine ───────────────────────────────────────────────
 // Stat influence on racing:
@@ -41,109 +42,182 @@ function seededRandom(seed: number): () => number {
   };
 }
 
-// ── Simulate a full race instantly ─────────────────────────────────────
+// ── Buff-aware movement calculation ────────────────────────────────────
 
-export function simulateRace(
-  race: Race,
-  characters: NFTCharacter[],
-  seed?: number
-): Race {
-  const rand = seededRandom(seed ?? Date.now());
-  const charMap = new Map(characters.map((c) => [c.id, c]));
+interface TickContext {
+  rand: () => number;
+  entry: RaceEntry;
+  char: NFTCharacter;
+  buffs: ActiveBuff[];
+  allEntries: RaceEntry[];
+  currentTick: number;
+}
 
-  const entries: RaceEntry[] = race.entries.map((e) => ({ ...e, position: 0 }));
-  const finishOrder: { characterId: string; tick: number }[] = [];
+function calculateMove(ctx: TickContext): number {
+  const { rand, entry, char, buffs, allEntries, currentTick } = ctx;
+  const { speed, agility, stamina, luck, toughness, charisma } = char.stats;
 
-  let tick = 0;
-  const maxTicks = 2000; // safety cap
+  const hasBuffs = (id: string) => buffs.some((b) => b.buffId === id);
 
-  while (finishOrder.length < entries.length && tick < maxTicks) {
-    tick++;
-    for (const entry of entries) {
-      if (entry.finishTime != null) continue; // already finished
+  // ── Base speed ───────────────────────────────────────────────────
+  let effectiveSpeed = speed;
+  if (hasBuffs("turbo_charger")) effectiveSpeed *= 1.15;
 
-      const char = charMap.get(entry.characterId);
-      if (!char) continue;
-      const { speed, agility, stamina, luck, toughness, charisma } = char.stats;
+  let move = 0.3 + (effectiveSpeed / 30) * 1.2;
 
-      // Base movement from speed
-      let move = 0.3 + (speed / 30) * 1.2;
+  // ── Head Start (applied on tick 1) ───────────────────────────────
+  if (currentTick === 1 && hasBuffs("head_start")) {
+    entry.position = 5;
+  }
 
-      // Stamina: less slowdown as race progresses
-      const fatiguePoint = 50 + stamina * 2;
-      if (entry.position > fatiguePoint) {
-        const fatigueFactor = 1 - ((entry.position - fatiguePoint) / (RACE_DISTANCE - fatiguePoint)) * 0.4;
-        move *= Math.max(0.5, fatigueFactor + stamina * 0.01);
-      }
+  // ── Stamina / Fatigue ────────────────────────────────────────────
+  let fatiguePoint = 50 + stamina * 2;
+  if (hasBuffs("energy_drink")) fatiguePoint += 15; // delayed fatigue
 
-      // Agility: shortcut chance
-      if (rand() < agility * 0.008) {
-        move += 1.5;
-      }
+  if (entry.position > fatiguePoint) {
+    const fatigueFactor = 1 - ((entry.position - fatiguePoint) / (RACE_DISTANCE - fatiguePoint)) * 0.4;
+    move *= Math.max(0.5, fatigueFactor + stamina * 0.01);
+  }
 
-      // Luck: burst chance
-      if (rand() < luck * 0.006) {
-        move += 2.0;
-      }
+  // ── Agility: shortcut chance ─────────────────────────────────────
+  let agilityChance = agility * 0.008;
+  if (hasBuffs("clone_sprint")) agilityChance *= 3;
 
-      // Toughness: collision recovery (random slowdowns are smaller)
-      if (rand() < 0.08) {
-        const collisionPenalty = Math.max(0.1, 1.2 - toughness * 0.06);
-        move -= collisionPenalty;
-      }
+  if (rand() < agilityChance) move += 1.5;
 
-      // Charisma: crowd boost near end
-      if (entry.position > 70 && rand() < charisma * 0.005) {
-        move += 1.0;
-      }
+  // ── Luck: burst chance ───────────────────────────────────────────
+  let luckStat = luck;
+  if (hasBuffs("double_luck") || hasBuffs("lucky_penny")) luckStat *= 2;
 
-      // Random variance
-      move += (rand() - 0.5) * 0.6;
-      move = Math.max(0.05, move);
+  if (rand() < luckStat * 0.006) move += 2.0;
 
-      entry.position = Math.min(RACE_DISTANCE, entry.position + move);
+  // ── Collision / Toughness ────────────────────────────────────────
+  const ghostActive = hasBuffs("ghost_mode") && entry.position < 40;
+  const shieldActive = hasBuffs("shield_wall");
 
-      if (entry.position >= RACE_DISTANCE && entry.finishTime == null) {
-        entry.finishTime = tick * TICK_INTERVAL_MS;
-        finishOrder.push({ characterId: entry.characterId, tick });
+  if (rand() < 0.08 && !ghostActive && !shieldActive) {
+    let penalty = Math.max(0.1, 1.2 - toughness * 0.06);
+    if (hasBuffs("rubber_bumpers")) penalty *= 0.25;
+    move -= penalty;
+  }
+
+  // ── Charisma: crowd boost ────────────────────────────────────────
+  const crowdThreshold = hasBuffs("crowd_frenzy") ? 40 : 70;
+  if (entry.position > crowdThreshold && rand() < charisma * 0.005) {
+    move += 1.0;
+  }
+
+  // ── Nitro Boost (one-time, random trigger between 20-80%) ────────
+  const nitroBuff = buffs.find((b) => b.buffId === "nitro_boost" && !b.triggered);
+  if (nitroBuff && entry.position >= 20 && entry.position <= 80 && rand() < 0.06) {
+    move *= 1.3;
+    nitroBuff.triggered = true;
+    nitroBuff.triggerTick = currentTick;
+  }
+
+  // ── Slipstream (final 20%, if 2nd-4th) ───────────────────────────
+  if (hasBuffs("slipstream") && entry.position > 80) {
+    const sorted = [...allEntries]
+      .filter((e) => e.finishTime == null)
+      .sort((a, b) => b.position - a.position);
+    const rank = sorted.findIndex((e) => e.characterId === entry.characterId);
+    if (rank >= 1 && rank <= 3) {
+      move += 1.2;
+    }
+  }
+
+  // ── Random variance ──────────────────────────────────────────────
+  move += (rand() - 0.5) * 0.6;
+  move = Math.max(0.05, move);
+
+  return move;
+}
+
+// ── Apply global buffs (affect all racers) ─────────────────────────────
+
+interface GlobalBuffEvent {
+  buffId: string;
+  triggerPosition: number;
+  triggered: boolean;
+}
+
+function processGlobalBuffs(
+  allBuffs: ActiveBuff[],
+  allEntries: RaceEntry[],
+  rand: () => number
+): GlobalBuffEvent[] {
+  const events: GlobalBuffEvent[] = [];
+
+  // Banana Peel: random opponent gets slowed
+  const bananaPeels = allBuffs.filter((b) => b.buffId === "banana_peel" && !b.triggered);
+  for (const bp of bananaPeels) {
+    const owner = allEntries.find((e) => e.characterId === bp.characterId);
+    if (owner && owner.position > 30 && owner.position < 70 && rand() < 0.04) {
+      // Slow a random OTHER racer
+      const others = allEntries.filter(
+        (e) => e.characterId !== bp.characterId && e.finishTime == null
+      );
+      if (others.length > 0) {
+        const victim = others[Math.floor(rand() * others.length)];
+        victim.position = Math.max(0, victim.position - 3);
+        bp.triggered = true;
       }
     }
   }
 
-  // Assign placements
-  finishOrder.sort((a, b) => a.tick - b.tick);
-  const results: RaceResult[] = finishOrder.map((fo, idx) => {
-    const entry = entries.find((e) => e.characterId === fo.characterId)!;
-    entry.placement = idx + 1;
-    return {
-      characterId: fo.characterId,
-      placement: idx + 1,
-      timeMs: fo.tick * TICK_INTERVAL_MS,
-      pointsEarned: POINTS_BY_PLACE[idx] ?? 3,
-    };
-  });
+  // Earthquake: at 50% mark, slow everyone
+  const earthquakes = allBuffs.filter((b) => b.buffId === "earthquake" && !b.triggered);
+  for (const eq of earthquakes) {
+    const owner = allEntries.find((e) => e.characterId === eq.characterId);
+    if (owner && owner.position >= 48 && owner.position <= 52) {
+      for (const entry of allEntries) {
+        if (entry.finishTime == null) {
+          const penalty = 2 + rand() * 4; // 2-6 position penalty
+          entry.position = Math.max(0, entry.position - penalty);
+        }
+      }
+      eq.triggered = true;
+    }
+  }
 
-  return {
-    ...race,
-    status: "finished",
-    entries,
-    results,
-  };
+  // Time Warp: at 60% mark, swap with racer ahead
+  const timeWarps = allBuffs.filter((b) => b.buffId === "time_warp" && !b.triggered);
+  for (const tw of timeWarps) {
+    const owner = allEntries.find((e) => e.characterId === tw.characterId);
+    if (owner && owner.position >= 58 && owner.position <= 62 && owner.finishTime == null) {
+      const sorted = [...allEntries]
+        .filter((e) => e.finishTime == null)
+        .sort((a, b) => b.position - a.position);
+      const myIdx = sorted.findIndex((e) => e.characterId === tw.characterId);
+      if (myIdx > 0) {
+        // Swap positions with the racer ahead
+        const ahead = sorted[myIdx - 1];
+        const tempPos = owner.position;
+        owner.position = ahead.position;
+        ahead.position = tempPos;
+        tw.triggered = true;
+      }
+    }
+  }
+
+  return events;
 }
 
-// ── Tick-based simulation for animation ────────────────────────────────
+// ── Buff-aware Race Simulator ──────────────────────────────────────────
 
 export interface RaceSimulator {
   tick: () => RaceEntry[];
   isFinished: () => boolean;
   getResults: () => RaceResult[];
   getEntries: () => RaceEntry[];
+  getBuffEvents: () => ActiveBuff[];
 }
 
 export function createRaceSimulator(
   race: Race,
   characters: NFTCharacter[],
-  seed?: number
+  seed?: number,
+  raceBuffs?: ActiveBuff[]
 ): RaceSimulator {
   const rand = seededRandom(seed ?? Date.now());
   const charMap = new Map(characters.map((c) => [c.id, c]));
@@ -151,30 +225,31 @@ export function createRaceSimulator(
   const finishOrder: { characterId: string; tick: number }[] = [];
   let currentTick = 0;
 
+  // Deep copy buffs so we can mutate triggered state
+  const activeBuffs: ActiveBuff[] = (raceBuffs ?? []).map((b) => ({ ...b }));
+
   function tick(): RaceEntry[] {
     if (finishOrder.length >= entries.length) return entries;
     currentTick++;
+
+    // Process global buffs first
+    processGlobalBuffs(activeBuffs, entries, rand);
 
     for (const entry of entries) {
       if (entry.finishTime != null) continue;
       const char = charMap.get(entry.characterId);
       if (!char) continue;
-      const { speed, agility, stamina, luck, toughness, charisma } = char.stats;
 
-      let move = 0.3 + (speed / 30) * 1.2;
+      const charBuffs = activeBuffs.filter((b) => b.characterId === entry.characterId);
 
-      const fatiguePoint = 50 + stamina * 2;
-      if (entry.position > fatiguePoint) {
-        const fatigueFactor = 1 - ((entry.position - fatiguePoint) / (RACE_DISTANCE - fatiguePoint)) * 0.4;
-        move *= Math.max(0.5, fatigueFactor + stamina * 0.01);
-      }
-
-      if (rand() < agility * 0.008) move += 1.5;
-      if (rand() < luck * 0.006) move += 2.0;
-      if (rand() < 0.08) move -= Math.max(0.1, 1.2 - toughness * 0.06);
-      if (entry.position > 70 && rand() < charisma * 0.005) move += 1.0;
-      move += (rand() - 0.5) * 0.6;
-      move = Math.max(0.05, move);
+      const move = calculateMove({
+        rand,
+        entry,
+        char,
+        buffs: charBuffs,
+        allEntries: entries,
+        currentTick,
+      });
 
       entry.position = Math.min(RACE_DISTANCE, entry.position + move);
 
@@ -192,19 +267,63 @@ export function createRaceSimulator(
 
   function getResults(): RaceResult[] {
     const sorted = [...finishOrder].sort((a, b) => a.tick - b.tick);
+
+    // Check for Photo Finish buff
+    const winnerTick = sorted.length > 0 ? sorted[0].tick : 0;
+    const photoFinishCharIds = new Set(
+      activeBuffs
+        .filter((b) => b.buffId === "photo_finish")
+        .map((b) => b.characterId)
+    );
+
     return sorted.map((fo, idx) => {
       const entry = entries.find((e) => e.characterId === fo.characterId)!;
       entry.placement = idx + 1;
+
+      let pointsEarned = POINTS_BY_PLACE[idx] ?? 3;
+
+      // Photo Finish: if within 0.5s of winner and has the buff, get 1st place points
+      if (
+        idx > 0 &&
+        photoFinishCharIds.has(fo.characterId) &&
+        (fo.tick - winnerTick) * TICK_INTERVAL_MS <= 500
+      ) {
+        pointsEarned = POINTS_BY_PLACE[0]; // 1st place points
+      }
+
       return {
         characterId: fo.characterId,
         placement: idx + 1,
         timeMs: fo.tick * TICK_INTERVAL_MS,
-        pointsEarned: POINTS_BY_PLACE[idx] ?? 3,
+        pointsEarned,
       };
     });
   }
 
-  return { tick, isFinished, getResults, getEntries: () => entries };
+  return {
+    tick,
+    isFinished,
+    getResults,
+    getEntries: () => entries,
+    getBuffEvents: () => activeBuffs,
+  };
+}
+
+// ── Legacy createRace (unchanged) ──────────────────────────────────────
+
+export function simulateRace(
+  race: Race,
+  characters: NFTCharacter[],
+  seed?: number
+): Race {
+  const sim = createRaceSimulator(race, characters, seed);
+  while (!sim.isFinished()) sim.tick();
+  return {
+    ...race,
+    status: "finished",
+    entries: sim.getEntries(),
+    results: sim.getResults(),
+  };
 }
 
 // ── Schedule helpers ───────────────────────────────────────────────────

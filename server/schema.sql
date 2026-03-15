@@ -158,6 +158,89 @@ CREATE TABLE race_lobbies (
   INDEX idx_lobby_status (status)
 );
 
+-- ── Economy: User Coins ────────────────────────────────────────────
+
+CREATE TABLE user_coins (
+  user_id     VARCHAR(64)   PRIMARY KEY,
+  balance     INT           DEFAULT 0,
+  total_earned INT          DEFAULT 0,
+  updated_at  TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- ── Economy: Buff Inventory ────────────────────────────────────────
+
+CREATE TABLE buff_inventory (
+  id          INT           AUTO_INCREMENT PRIMARY KEY,
+  user_id     VARCHAR(64)   NOT NULL,
+  buff_id     VARCHAR(64)   NOT NULL,
+  quantity    INT           DEFAULT 0,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY uq_user_buff (user_id, buff_id),
+  INDEX idx_buffinv_user (user_id)
+);
+
+-- ── Economy: Unlocked Achievements ─────────────────────────────────
+
+CREATE TABLE user_achievements (
+  id              INT           AUTO_INCREMENT PRIMARY KEY,
+  user_id         VARCHAR(64)   NOT NULL,
+  achievement_id  VARCHAR(64)   NOT NULL,
+  unlocked_at     TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY uq_user_ach (user_id, achievement_id),
+  INDEX idx_ach_user (user_id)
+);
+
+-- ── Economy: Player Stats ──────────────────────────────────────────
+
+CREATE TABLE player_stats (
+  user_id                VARCHAR(64)   PRIMARY KEY,
+  total_races            INT           DEFAULT 0,
+  total_wins             INT           DEFAULT 0,
+  total_second_place     INT           DEFAULT 0,
+  total_third_place      INT           DEFAULT 0,
+  total_top_three        INT           DEFAULT 0,
+  total_coins_earned     INT           DEFAULT 0,
+  current_win_streak     INT           DEFAULT 0,
+  longest_win_streak     INT           DEFAULT 0,
+  races_this_week        INT           DEFAULT 0,
+  races_this_season      INT           DEFAULT 0,
+  unique_nfts_raced      INT           DEFAULT 0,
+  buffs_used             INT           DEFAULT 0,
+  mystats_race_count     INT           DEFAULT 0,
+  mystats_points_earned  INT           DEFAULT 0,
+  updated_at             TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- ── Economy: MyStats Streamers Played (normalized) ─────────────────
+
+CREATE TABLE mystats_streamers_played (
+  id          INT           AUTO_INCREMENT PRIMARY KEY,
+  user_id     VARCHAR(64)   NOT NULL,
+  streamer_id VARCHAR(100)  NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY uq_user_streamer (user_id, streamer_id),
+  INDEX idx_msp_user (user_id)
+);
+
+-- ── Economy: Race Buff Usage (audit log) ───────────────────────────
+
+CREATE TABLE race_buff_usage (
+  id          INT           AUTO_INCREMENT PRIMARY KEY,
+  race_id     INT           NOT NULL,
+  nft_id      VARCHAR(64)   NOT NULL,
+  user_id     VARCHAR(64)   NOT NULL,
+  buff_id     VARCHAR(64)   NOT NULL,
+  triggered   BOOLEAN       DEFAULT FALSE,
+  used_at     TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (race_id) REFERENCES races(id) ON DELETE CASCADE,
+  FOREIGN KEY (nft_id) REFERENCES nfts(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_rbu_race (race_id)
+);
+
 -- ── Insert initial season ────────────────────────────────────────────
 
 INSERT INTO seasons (name, start_date, end_date, is_active)
