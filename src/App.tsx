@@ -1,10 +1,11 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import type { SeasonEntry, RaceResult, BattleResult } from "./types/nft";
 import { SAMPLE_COLLECTION } from "./data/sampleCollection";
 import { useAuth } from "./hooks/useAuth";
 import { useProgression } from "./hooks/useProgression";
 import { useEconomy } from "./hooks/useEconomy";
 import { AuthBar } from "./components/AuthBar";
+import { Onboarding } from "./components/Onboarding";
 import { CollectionPage } from "./pages/CollectionPage";
 import { RacePage } from "./pages/RacePage";
 import { BattlePage } from "./pages/BattlePage";
@@ -31,6 +32,25 @@ function App() {
   const auth = useAuth();
   const progression = useProgression();
   const economy = useEconomy();
+
+  // Track the last user ID we loaded data for, to avoid re-loading
+  const lastLoadedUserId = useRef<string | null>(null);
+
+  // ── Load server data when user logs in ──────────────────────────
+  useEffect(() => {
+    const uid = auth.user?.twitchUser?.id;
+    if (!uid || uid === lastLoadedUserId.current) return;
+    lastLoadedUserId.current = uid;
+
+    // Load economy data from server
+    economy.loadFromServer(uid);
+
+    // Load progression data for owned NFTs
+    const ownedIds = auth.user?.ownedNftIds ?? [];
+    if (ownedIds.length > 0) {
+      progression.loadFromServer(ownedIds);
+    }
+  }, [auth.user?.twitchUser?.id, auth.user?.ownedNftIds]);
 
   const handleRaceResults = useCallback((results: RaceResult[]) => {
     setLeaderboard((prev) => {
@@ -64,6 +84,15 @@ function App() {
       return next;
     });
   }, []);
+
+  // ── Onboarding gate: logged in but no wallet? ───────────────────
+  if (auth.needsWallet) {
+    return (
+      <div className="app">
+        <Onboarding auth={auth} />
+      </div>
+    );
+  }
 
   return (
     <div className="app">

@@ -5,6 +5,14 @@ interface AuthBarProps {
 }
 
 export function AuthBar({ auth }: AuthBarProps) {
+  if (auth.loading) {
+    return (
+      <div className="auth-bar">
+        <span className="auth-loading">Logging in...</span>
+      </div>
+    );
+  }
+
   if (!auth.isLoggedIn) {
     return (
       <div className="auth-bar">

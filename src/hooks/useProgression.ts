@@ -9,20 +9,21 @@ import {
 } from "../engines/progression";
 import type { CharacterProgression, ProgressionGain } from "../engines/progression";
 import { totalPower } from "../data/traitStatMap";
+import { progressionApi } from "../api/client";
 
-// ── Persistence key ────────────────────────────────────────────────────
-const STORAGE_KEY = "camwow_progression";
+// ── Local cache ────────────────────────────────────────────────────────
+const CACHE_KEY = "camwow_progression";
 
-function loadProgressions(): Record<string, CharacterProgression> {
-  const saved = localStorage.getItem(STORAGE_KEY);
+function loadCache(): Record<string, CharacterProgression> {
+  const saved = localStorage.getItem(CACHE_KEY);
   if (saved) {
     try { return JSON.parse(saved); } catch { return {}; }
   }
   return {};
 }
 
-function saveProgressions(data: Record<string, CharacterProgression>) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+function saveCache(data: Record<string, CharacterProgression>) {
+  localStorage.setItem(CACHE_KEY, JSON.stringify(data));
 }
 
 // ── Hook ───────────────────────────────────────────────────────────────
@@ -32,12 +33,46 @@ export interface UseProgressionResult {
   applyRaceResult: (characterId: string, baseStats: Stats, placement: number) => ProgressionGain[];
   getEffectiveCharacter: (character: NFTCharacter) => NFTCharacter;
   progressions: Record<string, CharacterProgression>;
+  loadFromServer: (nftIds: string[]) => Promise<void>;
 }
 
 export function useProgression(): UseProgressionResult {
   const [progressions, setProgressions] = useState<Record<string, CharacterProgression>>(
-    loadProgressions
+    loadCache
   );
+
+  // ── Load from server ─────────────────────────────────────────────
+
+  const loadFromServer = useCallback(async (nftIds: string[]) => {
+    if (nftIds.length === 0) return;
+    try {
+      const serverData = await progressionApi.getBatch(nftIds);
+      const merged = { ...progressions };
+
+      for (const nftId of nftIds) {
+        const serverProg = serverData[nftId];
+        if (serverProg) {
+          const existing = merged[nftId] ?? createEmptyProgression(nftId);
+          merged[nftId] = {
+            ...existing,
+            characterId: nftId,
+            statProgress: { ...existing.statProgress },
+          };
+          for (const key of Object.keys(serverProg) as StatKey[]) {
+            merged[nftId].statProgress[key] = {
+              xp: serverProg[key].xp,
+              level: serverProg[key].level,
+            };
+          }
+        }
+      }
+
+      setProgressions(merged);
+      saveCache(merged);
+    } catch {
+      // Server unreachable — use cached data
+    }
+  }, [progressions]);
 
   const getProgression = useCallback(
     (characterId: string): CharacterProgression => {
@@ -61,7 +96,10 @@ export function useProgression(): UseProgressionResult {
 
       const updated = { ...progressions, [characterId]: prog };
       setProgressions(updated);
-      saveProgressions(updated);
+      saveCache(updated);
+
+      // Server sync: save updated progression
+      progressionApi.update(characterId, prog.statProgress).catch(() => {});
 
       return gains;
     },
@@ -88,6 +126,7 @@ export function useProgression(): UseProgressionResult {
     applyRaceResult,
     getEffectiveCharacter,
     progressions,
+    loadFromServer,
   };
 }
 
