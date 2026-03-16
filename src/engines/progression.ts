@@ -24,15 +24,15 @@ const PLACEMENT_STAT_XP: Record<number, number> = {
 
 // Race XP by placement
 const RACE_XP: Record<number, number> = {
-  1: 100,  // 1st place
-  2: 70,   // 2nd place
-  3: 50,   // 3rd place
+  1: 120,  // 1st place
+  2: 85,   // 2nd place
+  3: 60,   // 3rd place
 };
-const RACE_XP_PARTICIPATION = 20; // 4th place and below
+const RACE_XP_PARTICIPATION = 30; // 4th place and below
 
 // Battle XP
-const BATTLE_XP_WIN = 60;
-const BATTLE_XP_LOSS = 15;
+const BATTLE_XP_WIN = 80;
+const BATTLE_XP_LOSS = 25;
 
 // XP needed per stat level (escalating curve)
 // Level 1: 10 XP, Level 2: 25 XP, Level 3: 50 XP, etc.
@@ -41,11 +41,12 @@ function xpForStatLevel(level: number): number {
   return Math.floor(10 * Math.pow(level, 1.6));
 }
 
-// XP needed for next overall NFT level (steeper curve)
-// Level 1: 100 XP, Level 2: ~200, Level 10: ~1600, Level 50: ~18k
+// XP needed for next overall NFT level (gentle curve)
+// Level 1: 80 XP, Level 10: ~897, Level 25: ~2349, Level 50: ~4864
+// Total to max: ~121k XP — achievable in ~11 months of dedicated play
 export function xpForNftLevel(level: number): number {
   if (level <= 0) return 0;
-  return Math.floor(100 * Math.pow(level, 1.3));
+  return Math.floor(80 * Math.pow(level, 1.05));
 }
 
 // Total XP needed to reach a given stat level
@@ -177,7 +178,10 @@ export function applyRaceProgression(
 
 // ── Battle Progression ───────────────────────────────────────────────
 // Battles award overall NFT XP + stat XP based on outcome.
-// Winner: toughness XP (proved durability). Loser: stamina XP (endurance).
+// All 6 stats can grow from battles — winners and losers gain different stats.
+//
+// Winner: +2 toughness (proved durability), +1 luck, +1 agility (combat reflexes)
+// Loser:  +1 stamina (endurance), +1 charisma (learned from defeat), +1 speed (got faster)
 
 export function applyBattleProgression(
   progression: CharacterProgression,
@@ -186,18 +190,20 @@ export function applyBattleProgression(
 ): { statGains: ProgressionGain[]; levelUp: LevelUpEvent | null } {
   const statGains: ProgressionGain[] = [];
 
-  // Stat XP from battle
   if (won) {
-    // Winner gets toughness XP (proved strength)
-    const gain = applyXpToStat(progression, "toughness", 2);
-    if (gain) statGains.push(gain);
-    // +1 luck XP for winning
-    const luckGain = applyXpToStat(progression, "luck", 1);
-    if (luckGain) statGains.push(luckGain);
+    const tough = applyXpToStat(progression, "toughness", 2);
+    if (tough) statGains.push(tough);
+    const luck = applyXpToStat(progression, "luck", 1);
+    if (luck) statGains.push(luck);
+    const agility = applyXpToStat(progression, "agility", 1);
+    if (agility) statGains.push(agility);
   } else {
-    // Loser gets stamina XP (took hits, built endurance)
-    const gain = applyXpToStat(progression, "stamina", 1);
-    if (gain) statGains.push(gain);
+    const stam = applyXpToStat(progression, "stamina", 1);
+    if (stam) statGains.push(stam);
+    const charisma = applyXpToStat(progression, "charisma", 1);
+    if (charisma) statGains.push(charisma);
+    const speed = applyXpToStat(progression, "speed", 1);
+    if (speed) statGains.push(speed);
   }
 
   // Overall NFT XP from battle
