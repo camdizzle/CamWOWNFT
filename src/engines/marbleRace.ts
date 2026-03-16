@@ -42,6 +42,18 @@ function seededRandom(seed: number): () => number {
   };
 }
 
+// ── Soft cap: diminishing returns above SOFT_CAP_KNEE ─────────────────
+// Below the knee, stats scale 1:1.  Above it, returns follow sqrt curve.
+// Examples (knee=15): 5→5, 10→10, 15→15, 20→17.3, 32→21.9
+
+const SOFT_CAP_KNEE = 15;
+
+function softCap(raw: number): number {
+  if (raw <= SOFT_CAP_KNEE) return raw;
+  const excess = raw - SOFT_CAP_KNEE;
+  return SOFT_CAP_KNEE + Math.sqrt(excess) * 2;
+}
+
 // ── Buff-aware movement calculation ────────────────────────────────────
 
 interface TickContext {
@@ -55,7 +67,14 @@ interface TickContext {
 
 function calculateMove(ctx: TickContext): number {
   const { rand, entry, char, buffs, allEntries, currentTick } = ctx;
-  const { speed, agility, stamina, luck, toughness, charisma } = char.stats;
+
+  // Apply soft cap to all stats used in race formulas
+  const speed = softCap(char.stats.speed);
+  const agility = softCap(char.stats.agility);
+  const stamina = softCap(char.stats.stamina);
+  const luck = softCap(char.stats.luck);
+  const toughness = softCap(char.stats.toughness);
+  const charisma = softCap(char.stats.charisma);
 
   const hasBuffs = (id: string) => buffs.some((b) => b.buffId === id);
 
