@@ -44,14 +44,14 @@ function seededRandom(seed: number): () => number {
 
 // ── Soft cap: diminishing returns above SOFT_CAP_KNEE ─────────────────
 // Below the knee, stats scale 1:1.  Above it, returns follow sqrt curve.
-// Examples (knee=15): 5→5, 10→10, 15→15, 20→17.3, 32→21.9
+// Examples (knee=10): 5→5, 10→10, 15→13.4, 20→14.7, 32→17.0
 
-const SOFT_CAP_KNEE = 15;
+const SOFT_CAP_KNEE = 10;
 
 function softCap(raw: number): number {
   if (raw <= SOFT_CAP_KNEE) return raw;
   const excess = raw - SOFT_CAP_KNEE;
-  return SOFT_CAP_KNEE + Math.sqrt(excess) * 2;
+  return SOFT_CAP_KNEE + Math.sqrt(excess) * 1.5;
 }
 
 // ── Buff-aware movement calculation ────────────────────────────────────
@@ -145,8 +145,18 @@ function calculateMove(ctx: TickContext): number {
     }
   }
 
+  // ── Rubber-band: trailing racers get a small catch-up nudge ──────
+  const sorted = [...allEntries]
+    .filter((e) => e.finishTime == null)
+    .sort((a, b) => b.position - a.position);
+  const leaderPos = sorted[0]?.position ?? 0;
+  const gap = leaderPos - entry.position;
+  if (gap > 5) {
+    move += Math.min(0.35, (gap - 5) * 0.03);
+  }
+
   // ── Random variance ──────────────────────────────────────────────
-  move += (rand() - 0.5) * 0.6;
+  move += (rand() - 0.5) * 0.9;
   move = Math.max(0.05, move);
 
   return move;
