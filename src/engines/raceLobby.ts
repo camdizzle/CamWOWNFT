@@ -1,28 +1,32 @@
-import type { RaceLobby, LobbyStatus } from "../types/nft";
+import type { RaceLobby, LobbyStatus, RaceMode } from "../types/nft";
 
 // ── Race Lobby Engine ──────────────────────────────────────────────────
-// Races scheduled every 4 hours. Minimum 6 entries to start.
-// If < 6 at scheduled time, timer extends in 15-min increments.
-// Max 2 NFTs per Twitch user per race. Max 16 entries per race.
+// Races scheduled every 4 hours. Minimum 6 entries to start normally.
+// If < 6 at scheduled time, timer extends in 15-min increments up to 2 hours.
+// After 2 hours of extensions, race starts with 3+ racers (no cancellation).
+// No maximum racer cap — unlimited entries allowed.
+// Two modes: "free" (earn coins) and "premium" (50 PBP entry fee with prize pool).
 
 const RACE_INTERVAL_MS = 4 * 60 * 60 * 1000; // 4 hours
 const EXTENSION_MS = 15 * 60 * 1000; // 15-min extensions
-const MAX_EXTENSIONS = 8; // max 2 hours of extensions before cancellation
-const MIN_ENTRIES = 6;
-const MAX_ENTRIES = 16;
+const MAX_EXTENSIONS = 8; // max 2 hours of extensions
+const MIN_ENTRIES = 6; // normal minimum to start
+const MIN_ENTRIES_EXTENDED = 3; // minimum after max extensions
 const MAX_PER_USER = 2;
 const COUNTDOWN_DURATION_MS = 30 * 1000; // 30-second countdown once min met
 
-export function createLobby(scheduledTime: number): RaceLobby {
+export function createLobby(scheduledTime: number, mode: RaceMode = "free"): RaceLobby {
   return {
-    id: `lobby-${scheduledTime}`,
+    id: `lobby-${scheduledTime}-${mode}`,
     scheduledTime,
     deadlineTime: scheduledTime,
     status: "waiting",
     entries: [],
     minEntries: MIN_ENTRIES,
-    maxEntries: MAX_ENTRIES,
     maxPerUser: MAX_PER_USER,
+    mode,
+    entryFeePBP: mode === "premium" ? 50 : 0,
+    prizePool: 0,
   };
 }
 
@@ -41,9 +45,7 @@ export function joinLobby(
     return { ok: false, reason: "Race has already started or finished." };
   }
 
-  if (lobby.entries.length >= lobby.maxEntries) {
-    return { ok: false, reason: `Race is full (${lobby.maxEntries} max).` };
-  }
+  // No max cap — unlimited entries
 
   // Check per-user limit
   const userEntries = lobby.entries.filter((e) => e.userId === userId);
@@ -65,6 +67,11 @@ export function joinLobby(
     readyAt: Date.now(),
   });
 
+  // For premium races, add to prize pool
+  if (lobby.mode === "premium") {
+    lobby.prizePool += lobby.entryFeePBP;
+  }
+
   return { ok: true };
 }
 
@@ -75,6 +82,12 @@ export function leaveLobby(lobby: RaceLobby, characterId: string): boolean {
   const idx = lobby.entries.findIndex((e) => e.characterId === characterId);
   if (idx === -1) return false;
   lobby.entries.splice(idx, 1);
+
+  // For premium races, refund from prize pool
+  if (lobby.mode === "premium") {
+    lobby.prizePool = Math.max(0, lobby.prizePool - lobby.entryFeePBP);
+  }
+
   return true;
 }
 
@@ -94,12 +107,12 @@ export function tickLobby(lobby: RaceLobby, now: number = Date.now()): LobbyStat
   // At or past deadline
   if (now >= lobby.deadlineTime) {
     if (lobby.entries.length >= lobby.minEntries) {
-      // Enough racers — start countdown (or go straight to racing)
+      // Enough racers — start countdown
       lobby.status = "countdown";
       return "countdown";
     }
 
-    // Not enough racers — extend or give up
+    // Not enough racers — extend or lower threshold
     const extensions = Math.floor(
       (lobby.deadlineTime - lobby.scheduledTime) / EXTENSION_MS
     );
@@ -108,9 +121,18 @@ export function tickLobby(lobby: RaceLobby, now: number = Date.now()): LobbyStat
       return "waiting"; // extended, keep waiting
     }
 
-    // Max extensions reached — cancel this race
-    lobby.status = "finished";
-    return "finished";
+    // Max extensions reached — lower minimum to 3 and start if possible
+    if (lobby.entries.length >= MIN_ENTRIES_EXTENDED) {
+      lobby.minEntries = MIN_ENTRIES_EXTENDED;
+      lobby.status = "countdown";
+      return "countdown";
+    }
+
+    // Still not enough even for extended minimum — keep waiting
+    // (no cancellation — race stays open until 3+ join)
+    lobby.minEntries = MIN_ENTRIES_EXTENDED;
+    lobby.deadlineTime += EXTENSION_MS; // keep extending
+    return "waiting";
   }
 
   // We have enough entries before the deadline
@@ -123,6 +145,26 @@ export function tickLobby(lobby: RaceLobby, now: number = Date.now()): LobbyStat
   }
 
   return "waiting";
+}
+
+// ── Premium Race Prize Calculation ─────────────────────────────────────
+
+export interface PremiumPrizeBreakdown {
+  first: number;
+  second: number;
+  third: number;
+  treasury: number; // goes to season prize pool
+  totalPool: number;
+}
+
+export function calculatePremiumPrizes(prizePool: number): PremiumPrizeBreakdown {
+  return {
+    first: Math.floor(prizePool * 0.40),
+    second: Math.floor(prizePool * 0.15),
+    third: Math.floor(prizePool * 0.10),
+    treasury: Math.floor(prizePool * 0.35),
+    totalPool: prizePool,
+  };
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────
@@ -152,4 +194,4 @@ export function getLobbySchedule(count: number, from: number = Date.now()): numb
   return schedule;
 }
 
-export { MIN_ENTRIES, MAX_ENTRIES, MAX_PER_USER, COUNTDOWN_DURATION_MS, EXTENSION_MS };
+export { MIN_ENTRIES, MIN_ENTRIES_EXTENDED, MAX_PER_USER, COUNTDOWN_DURATION_MS, EXTENSION_MS };

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import type { NFTCharacter, RaceLobby as RaceLobbyType, RaceResult } from "../types/nft";
+import type { NFTCharacter, RaceLobby as RaceLobbyType, RaceResult, RaceMode } from "../types/nft";
+import { PREMIUM_ENTRY_FEE_PBP } from "../types/nft";
 import type { ActiveBuff } from "../engines/buffs";
 import { BUFF_CATALOG, RARITY_COLORS, MAX_BUFFS_PER_ENTRY } from "../engines/buffs";
 import {
@@ -10,11 +11,15 @@ import {
   getUserEntryCount,
   getTimeUntilDeadline,
   getLobbySchedule,
+  calculatePremiumPrizes,
   MIN_ENTRIES,
+  MIN_ENTRIES_EXTENDED,
   MAX_PER_USER,
   COUNTDOWN_DURATION_MS,
 } from "../engines/raceLobby";
 import { createRace, createRaceSimulator } from "../engines/marbleRace";
+import { addToSeasonPool, getSeasonPool } from "../engines/seasonPool";
+import { SeasonPoolGauge } from "./SeasonPoolGauge";
 import type { AuthState } from "../hooks/useAuth";
 import type { UseEconomyResult } from "../hooks/useEconomy";
 
@@ -22,7 +27,7 @@ interface RaceLobbyProps {
   characters: NFTCharacter[];
   auth: AuthState;
   economy?: UseEconomyResult;
-  onRaceComplete: (results: RaceResult[], racerIds: string[]) => void;
+  onRaceComplete: (results: RaceResult[], racerIds: string[], mode: RaceMode) => void;
 }
 
 const MARBLE_COLORS = [
@@ -33,14 +38,16 @@ const MARBLE_COLORS = [
 ];
 
 export function RaceLobbyComponent({ characters, auth, economy, onRaceComplete }: RaceLobbyProps) {
+  const [raceMode, setRaceMode] = useState<RaceMode>("free");
   const [lobby, setLobby] = useState<RaceLobbyType>(() =>
-    createLobby(getLobbySchedule(1)[0])
+    createLobby(getLobbySchedule(1)[0], "free")
   );
   const [timeLeft, setTimeLeft] = useState("");
   const [countdownSec, setCountdownSec] = useState<number | null>(null);
   const [racing, setRacing] = useState(false);
   const [positions, setPositions] = useState<{ characterId: string; position: number; finished: boolean }[]>([]);
   const [results, setResults] = useState<RaceResult[] | null>(null);
+  const [premiumPrizes, setPremiumPrizes] = useState<{ first: number; second: number; third: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const intervalRef = useRef<number | null>(null);
   const raceIntervalRef = useRef<number | null>(null);
@@ -53,6 +60,14 @@ export function RaceLobbyComponent({ characters, auth, economy, onRaceComplete }
   const ownedIds = new Set(auth.user?.ownedNftIds ?? []);
   const ownedCharacters = characters.filter((c) => ownedIds.has(c.id));
   const charMap = new Map(characters.map((c) => [c.id, c]));
+
+  // Switch race mode
+  function handleModeSwitch(mode: RaceMode) {
+    if (racing || results || lobby.entries.length > 0) return;
+    setRaceMode(mode);
+    setLobby(createLobby(getLobbySchedule(1)[0], mode));
+    setError(null);
+  }
 
   // Timer tick
   useEffect(() => {
@@ -72,8 +87,9 @@ export function RaceLobbyComponent({ characters, auth, economy, onRaceComplete }
         const mins = Math.floor(ms / 60000);
         const secs = Math.floor((ms % 60000) / 1000);
         setTimeLeft(`${mins}:${secs.toString().padStart(2, "0")}`);
-      } else if (newLobby.entries.length < MIN_ENTRIES) {
-        setTimeLeft("Waiting for racers...");
+      } else if (newLobby.entries.length < newLobby.minEntries) {
+        const minNeeded = newLobby.minEntries;
+        setTimeLeft(`Waiting for racers... (${newLobby.entries.length}/${minNeeded})`);
       } else {
         setTimeLeft("Starting soon...");
       }
@@ -105,7 +121,8 @@ export function RaceLobbyComponent({ characters, auth, economy, onRaceComplete }
     const racerIds = lobbyState.entries.map((e) => e.characterId);
     const racers = racerIds.map((id) => charMap.get(id)).filter(Boolean) as NFTCharacter[];
 
-    if (racers.length < MIN_ENTRIES) return;
+    const minNeeded = lobbyState.minEntries;
+    if (racers.length < minNeeded) return;
 
     // Build ActiveBuff array from selected buffs and consume them
     const raceBuffs: ActiveBuff[] = [];
@@ -124,6 +141,14 @@ export function RaceLobbyComponent({ characters, auth, economy, onRaceComplete }
     setRacing(true);
     setPositions(racers.map((c) => ({ characterId: c.id, position: 0, finished: false })));
 
+    // Calculate premium prizes if applicable
+    if (lobbyState.mode === "premium") {
+      const prizes = calculatePremiumPrizes(lobbyState.prizePool);
+      setPremiumPrizes({ first: prizes.first, second: prizes.second, third: prizes.third });
+      // Add treasury share to season pool
+      addToSeasonPool(lobbyState.prizePool);
+    }
+
     raceIntervalRef.current = window.setInterval(() => {
       const entries = simulator.tick();
       setPositions(
@@ -139,13 +164,15 @@ export function RaceLobbyComponent({ characters, auth, economy, onRaceComplete }
         setRacing(false);
         const raceResults = simulator.getResults();
         setResults(raceResults);
-        onRaceComplete(raceResults, racerIds);
+        onRaceComplete(raceResults, racerIds, lobbyState.mode);
 
         // Reset lobby for next race
         setTimeout(() => {
-          setLobby(createLobby(getLobbySchedule(1)[0]));
+          setLobby(createLobby(getLobbySchedule(1)[0], raceMode));
           setSelectedBuffs({});
           setShowBuffPicker(null);
+          setResults(null);
+          setPremiumPrizes(null);
         }, 10000);
       }
     }, 50);
@@ -203,7 +230,7 @@ export function RaceLobbyComponent({ characters, auth, economy, onRaceComplete }
     return (
       <div className="race-lobby">
         <div className="lobby-header">
-          <h2>🏁 Marble Racing League</h2>
+          <h2>Marble Racing League</h2>
           <p className="subtitle">Login with Twitch to enter races</p>
         </div>
       </div>
@@ -213,7 +240,26 @@ export function RaceLobbyComponent({ characters, auth, economy, onRaceComplete }
   return (
     <div className="race-lobby">
       <div className="lobby-header">
-        <h2>🏁 Marble Racing League</h2>
+        <h2>Marble Racing League</h2>
+
+        {/* Race Mode Toggle */}
+        <div className="race-mode-toggle">
+          <button
+            className={`mode-btn ${raceMode === "free" ? "active mode-free" : ""}`}
+            onClick={() => handleModeSwitch("free")}
+            disabled={racing || results !== null || lobby.entries.length > 0}
+          >
+            Free Race
+          </button>
+          <button
+            className={`mode-btn ${raceMode === "premium" ? "active mode-premium" : ""}`}
+            onClick={() => handleModeSwitch("premium")}
+            disabled={racing || results !== null || lobby.entries.length > 0}
+          >
+            Premium Race ({PREMIUM_ENTRY_FEE_PBP} PBP)
+          </button>
+        </div>
+
         <div className="lobby-status-bar">
           <span className={`lobby-status ${lobby.status}`}>
             {lobby.status === "waiting" && "Waiting for Racers"}
@@ -222,11 +268,26 @@ export function RaceLobbyComponent({ characters, auth, economy, onRaceComplete }
             {lobby.status === "finished" && "Race Complete"}
           </span>
           <span className="lobby-count">
-            {lobby.entries.length} / {MIN_ENTRIES} min
+            {lobby.entries.length} / {lobby.minEntries} min
           </span>
           <span className="lobby-timer">{timeLeft}</span>
         </div>
+
+        {/* Premium race info */}
+        {raceMode === "premium" && (
+          <div className="premium-race-info">
+            <div className="premium-pool">
+              Prize Pool: <strong>{lobby.prizePool} PBP</strong>
+            </div>
+            <div className="premium-split">
+              1st: 40% | 2nd: 15% | 3rd: 10% | Season Pool: 35%
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Season Prize Pool Gauge */}
+      <SeasonPoolGauge />
 
       {countdownSec !== null && (
         <div className="countdown-overlay">
@@ -267,6 +328,12 @@ export function RaceLobbyComponent({ characters, auth, economy, onRaceComplete }
                 {results.map((r) => {
                   const char = charMap.get(r.characterId);
                   const isMine = myEnteredIds.has(r.characterId);
+                  const pbpPrize = premiumPrizes && raceMode === "premium"
+                    ? r.placement === 1 ? premiumPrizes.first
+                    : r.placement === 2 ? premiumPrizes.second
+                    : r.placement === 3 ? premiumPrizes.third
+                    : 0
+                    : 0;
                   return (
                     <div key={r.characterId} className={`result-row ${isMine ? "result-mine" : ""}`}>
                       <span className="result-place">
@@ -275,6 +342,9 @@ export function RaceLobbyComponent({ characters, auth, economy, onRaceComplete }
                       <span className="result-name">{char?.name ?? r.characterId}</span>
                       <span className="result-time">{(r.timeMs / 1000).toFixed(1)}s</span>
                       <span className="result-points">+{r.pointsEarned}pts</span>
+                      {pbpPrize > 0 && (
+                        <span className="result-pbp">+{pbpPrize} PBP</span>
+                      )}
                     </div>
                   );
                 })}
@@ -290,7 +360,13 @@ export function RaceLobbyComponent({ characters, auth, economy, onRaceComplete }
           <div className="lobby-rules">
             <span>Max {MAX_PER_USER} NFTs per user per race</span>
             <span>•</span>
-            <span>Min {MIN_ENTRIES} racers to start</span>
+            <span>Min {lobby.minEntries} racers to start</span>
+            {raceMode === "premium" && (
+              <>
+                <span>•</span>
+                <span className="rule-premium">Entry: {PREMIUM_ENTRY_FEE_PBP} PBP per NFT</span>
+              </>
+            )}
             <span>•</span>
             <span>Your entries: {userEntryCount} / {MAX_PER_USER}</span>
           </div>
@@ -392,6 +468,9 @@ export function RaceLobbyComponent({ characters, auth, economy, onRaceComplete }
                     <span className="lobby-nft-name">{char.name.split("—")[1] || char.name}</span>
                     <span className="lobby-nft-power">⚔️ {char.totalPower}</span>
                     {entered && <span className="lobby-nft-badge">ENTERED</span>}
+                    {raceMode === "premium" && !entered && (
+                      <span className="lobby-nft-fee">{PREMIUM_ENTRY_FEE_PBP} PBP</span>
+                    )}
                   </div>
                 );
               })}
@@ -405,7 +484,7 @@ export function RaceLobbyComponent({ characters, auth, economy, onRaceComplete }
 
       {/* Schedule */}
       <div className="lobby-schedule">
-        <h3>📅 Upcoming Races (every 4 hours)</h3>
+        <h3>Upcoming Races (every 4 hours)</h3>
         <div className="schedule-list">
           {getLobbySchedule(6).map((time, idx) => {
             const date = new Date(time);
@@ -422,7 +501,7 @@ export function RaceLobbyComponent({ characters, auth, economy, onRaceComplete }
                 </span>
                 {diff > 0 && (
                   <span className="schedule-countdown">
-                    {idx === 0 ? "🔴 NEXT — " : ""}{hours}h {mins}m
+                    {idx === 0 ? "NEXT — " : ""}{hours}h {mins}m
                   </span>
                 )}
               </div>

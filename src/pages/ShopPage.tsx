@@ -17,7 +17,7 @@ export function ShopPage({ economy }: ShopPageProps) {
       <div className="page-header">
         <h1>🪙 Shop & Achievements</h1>
         <p className="subtitle">
-          Buy race buffs with coins earned from racing and achievements
+          Buy buffs with coins or SOL — premium buffs are SOL-only
         </p>
       </div>
 

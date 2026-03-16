@@ -1,4 +1,4 @@
-import type { NFTCharacter, RaceResult } from "../types/nft";
+import type { NFTCharacter, RaceResult, RaceMode } from "../types/nft";
 import type { AuthState } from "../hooks/useAuth";
 import type { UseProgressionResult } from "../hooks/useProgression";
 import type { UseEconomyResult } from "../hooks/useEconomy";
@@ -16,7 +16,7 @@ export function RacePage({ characters, auth, progression, economy, onUpdateLeade
   // Apply progression to get effective characters for racing
   const effectiveCharacters = characters.map((c) => progression.getEffectiveCharacter(c));
 
-  function handleRaceComplete(results: RaceResult[], _racerIds: string[]) {
+  function handleRaceComplete(results: RaceResult[], _racerIds: string[], _mode: RaceMode) {
     // Apply stat progression for each racer
     for (const result of results) {
       const baseChar = characters.find((c) => c.id === result.characterId);
@@ -35,7 +35,7 @@ export function RacePage({ characters, auth, progression, economy, onUpdateLeade
       }
     }
 
-    // Process coin rewards for the user's entries
+    // Process coin rewards for the user's entries (both free and premium earn coins)
     const ownedIds = new Set(auth.user?.ownedNftIds ?? []);
     for (const result of results) {
       if (ownedIds.has(result.characterId)) {
@@ -55,9 +55,9 @@ export function RacePage({ characters, auth, progression, economy, onUpdateLeade
   return (
     <div className="page race-page">
       <div className="page-header">
-        <h1>🏁 Marble Racing League</h1>
+        <h1>Marble Racing League</h1>
         <p className="subtitle">
-          Races every 4 hours — minimum 6 racers to start — max 2 NFTs per user
+          Free races earn coins | Premium races cost 50 PBP with prize pool payouts
         </p>
       </div>
 

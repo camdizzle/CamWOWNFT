@@ -56,6 +56,7 @@ export interface UseEconomyResult {
   addCoins: (amount: number) => void;
   spendCoins: (amount: number) => boolean;
   buyBuff: (buffId: string) => { ok: boolean; reason?: string };
+  buyBuffWithSol: (buffId: string, solPrice: number) => { ok: boolean; reason?: string };
   consumeBuff: (buffId: string) => boolean;
   processRaceReward: (placement: number) => {
     coinsEarned: number;
@@ -142,11 +143,12 @@ export function useEconomy(): UseEconomyResult {
     return success;
   }, []);
 
-  // ── Buff Shop ────────────────────────────────────────────────────
+  // ── Buff Shop (Coins) ─────────────────────────────────────────────
 
   const buyBuff = useCallback((buffId: string): { ok: boolean; reason?: string } => {
     const def = BUFF_MAP.get(buffId);
     if (!def) return { ok: false, reason: "Unknown buff." };
+    if (def.premiumOnly) return { ok: false, reason: "This buff can only be purchased with SOL." };
 
     let purchaseOk = false;
     setCoins((prevCoins) => {
@@ -176,6 +178,43 @@ export function useEconomy(): UseEconomyResult {
     // Server sync
     if (userId) {
       economyApi.buyBuff(userId, buffId, def.cost).catch(() => {});
+    }
+
+    return { ok: true };
+  }, [userId]);
+
+  // ── Buff Shop (SOL) ────────────────────────────────────────────────
+
+  const buyBuffWithSol = useCallback((buffId: string, solPrice: number): { ok: boolean; reason?: string } => {
+    const def = BUFF_MAP.get(buffId);
+    if (!def) return { ok: false, reason: "Unknown buff." };
+    if (def.solPrice <= 0) return { ok: false, reason: "This buff cannot be purchased with SOL." };
+
+    // In production, this would trigger a Solana wallet transaction:
+    // 1. Create SPL transfer instruction to TREASURY_WALLET
+    // 2. User signs with their connected Solana wallet (Phantom, etc.)
+    // 3. On confirmation, server validates the tx and credits the buff
+    //
+    // For now, we optimistically add to inventory and sync with server.
+    // The server endpoint will verify the Solana transaction signature.
+
+    setInventory((prev) => {
+      const existing = prev.find((i) => i.buffId === buffId);
+      let next: BuffInventoryItem[];
+      if (existing) {
+        next = prev.map((i) =>
+          i.buffId === buffId ? { ...i, quantity: i.quantity + 1 } : i
+        );
+      } else {
+        next = [...prev, { buffId, quantity: 1 }];
+      }
+      saveCache(CACHE_INVENTORY, next);
+      return next;
+    });
+
+    // Server sync — passes SOL transaction details
+    if (userId) {
+      economyApi.buyBuffWithSol(userId, buffId, solPrice).catch(() => {});
     }
 
     return { ok: true };
@@ -377,6 +416,7 @@ export function useEconomy(): UseEconomyResult {
     addCoins,
     spendCoins,
     buyBuff,
+    buyBuffWithSol,
     consumeBuff,
     processRaceReward,
     updateMyStatsData,

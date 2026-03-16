@@ -107,8 +107,9 @@ export interface UserAccount {
   ownedNftIds: string[]; // aggregated across all wallets
 }
 
-// ── Race Lobby Types ───────────────────────────────────────────────────
+// ── Race Mode & Lobby Types ────────────────────────────────────────────
 
+export type RaceMode = "free" | "premium";
 export type LobbyStatus = "waiting" | "countdown" | "racing" | "finished";
 
 export interface LobbyEntry {
@@ -123,9 +124,37 @@ export interface RaceLobby {
   deadlineTime: number; // extends if < 6 racers
   status: LobbyStatus;
   entries: LobbyEntry[];
-  minEntries: number; // 6
-  maxEntries: number; // 16
+  minEntries: number; // 6 (normal), 3 (after extensions)
   maxPerUser: number; // 2
+  mode: RaceMode; // "free" or "premium"
+  entryFeePBP: number; // 0 for free, 50 for premium
+  prizePool: number; // accumulated PBP from entry fees
+}
+
+// ── Premium Race Economy ──────────────────────────────────────────────
+
+export const TREASURY_WALLET = "HtPe6EYLgmT3UzyZeBCLg5vX5JjsxpoggtXkRYYx6oN5";
+export const PREMIUM_ENTRY_FEE_PBP = 50;
+
+// Prize distribution for premium races (% of total prize pool)
+export const PREMIUM_PRIZE_SPLIT = {
+  first: 0.40,  // 40% to 1st place
+  second: 0.15, // 15% to 2nd place
+  third: 0.10,  // 10% to 3rd place
+  treasury: 0.35, // 35% stays in treasury → season prize pool
+} as const;
+
+export interface SeasonPrizePool {
+  seasonId: string;
+  totalPBP: number; // accumulated from 35% of premium race fees
+  totalRaces: number; // how many premium races contributed
+}
+
+export interface PremiumRaceResult {
+  characterId: string;
+  userId: string;
+  placement: number;
+  pbpPrize: number; // PBP won from the pool
 }
 
 // ── Season & Leaderboard ───────────────────────────────────────────────

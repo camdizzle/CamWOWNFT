@@ -18,10 +18,11 @@
 10. [Progression System (XP & Leveling)](#10-progression-system-xp--leveling)
 11. [Economy (Coins, Buffs, Achievements)](#11-economy-coins-buffs-achievements)
 12. [Race Lobby & Scheduling](#12-race-lobby--scheduling)
-13. [API Reference](#13-api-reference)
-14. [Frontend Architecture](#14-frontend-architecture)
-15. [Integration Notes for Your Users Table](#15-integration-notes-for-your-users-table)
-16. [Deployment Checklist](#16-deployment-checklist)
+13. [Monetization & Premium Economy](#13-monetization--premium-economy)
+14. [API Reference](#14-api-reference)
+15. [Frontend Architecture](#15-frontend-architecture)
+16. [Integration Notes for Your Users Table](#16-integration-notes-for-your-users-table)
+17. [Deployment Checklist](#17-deployment-checklist)
 
 ---
 
@@ -88,9 +89,10 @@ CamWOWNFT/
 │   ├── engines/               # Pure game logic (no React dependencies)
 │   │   ├── marbleRace.ts      # Race simulation (tick-based, seeded RNG)
 │   │   ├── battle.ts          # 1v1 battle simulation
-│   │   ├── buffs.ts           # Buff catalog + types (16 buffs, 5 rarity tiers)
+│   │   ├── buffs.ts           # Buff catalog + types (21 buffs, dual currency)
 │   │   ├── progression.ts     # XP/level system per NFT stat
-│   │   ├── raceLobby.ts       # Lobby scheduling, join/leave, extensions
+│   │   ├── raceLobby.ts       # Lobby scheduling, join/leave, free/premium modes
+│   │   ├── seasonPool.ts      # Season prize pool tracking (PBP tokens)
 │   │   └── achievements.ts    # Achievement definitions + evaluation
 │   │
 │   ├── hooks/                 # React state hooks
@@ -119,7 +121,8 @@ CamWOWNFT/
 │       ├── RaceLobby.tsx       # Lobby entry UI
 │       ├── BattleArena.tsx     # Battle animation + round log
 │       ├── Leaderboard.tsx     # Leaderboard table
-│       ├── BuffShop.tsx        # Buff purchase UI
+│       ├── BuffShop.tsx        # Unified dual-currency buff shop (coins + SOL)
+│       ├── SeasonPoolGauge.tsx # Visual gauge for season PBP prize pool
 │       ├── AchievementsPanel.tsx # Achievement grid
 │       └── WalletManager.tsx   # Wallet add/remove UI
 │
@@ -208,7 +211,7 @@ All tables use the `camwow_arena` database. Below is every table with its purpos
 | `seasons` | Season definitions | `name`, `start_date`, `end_date`, `is_active` |
 | `races` | Race records | `season_id`, `status`, `scheduled_time`, `seed` |
 | `race_entries` | NFTs entered in a race | `race_id`, `nft_id`, `user_id`, `placement`, `finish_time`, `points` |
-| `race_lobbies` | Active lobby state | `race_id`, `scheduled_time`, `deadline_time`, `status` |
+| `race_lobbies` | Active lobby state | `race_id`, `scheduled_time`, `deadline_time`, `status`, `mode`, `entry_fee_pbp`, `prize_pool` |
 | `battles` | Battle records | `challenger_id`, `opponent_id`, `winner_id`, `seed` |
 | `leaderboard` | Denormalized season rankings | `season_id`, `nft_id`, `points`, `race_count`, `race_wins`, etc. |
 
@@ -222,6 +225,15 @@ All tables use the `camwow_arena` database. Below is every table with its purpos
 | `player_stats` | Aggregated player metrics | `user_id`, 15+ stat columns (wins, streaks, etc.) |
 | `mystats_streamers_played` | Unique streamers a user has raced in | `user_id`, `streamer_id` |
 | `race_buff_usage` | Audit log of buffs used in races | `race_id`, `nft_id`, `buff_id`, `triggered` |
+
+### Premium Economy Tables
+
+| Table | Purpose | Key Columns |
+|-------|---------|-------------|
+| `premium_race_payments` | PBP entry fee audit log | `race_id`, `user_id`, `nft_id`, `amount_pbp`, `treasury_wallet` |
+| `premium_race_payouts` | PBP prize distributions | `race_id`, `nft_id`, `placement`, `amount_pbp` |
+| `season_prize_pool` | 35% of premium fees → season pool | `season_id`, `race_id`, `amount_pbp` |
+| `sol_purchases` | All SOL transactions (buff buys) | `user_id`, `item_type`, `item_id`, `sol_amount`, `tx_signature` |
 
 ### Key Relationships
 
@@ -562,19 +574,33 @@ The progression bonus is applied BEFORE the race soft cap, so high-progression N
 
 **Economy pace:** ~15 coins/race average. Common buffs cost 30-40 coins, so one buff every 2-3 races.
 
-### 11.2 Buff Catalog
+### 11.2 Buff Catalog (Dual Currency)
 
 **File:** `src/engines/buffs.ts`
 
-16 buffs across 5 rarity tiers:
+21 buffs across 5 rarity tiers. Regular buffs can be purchased with **coins OR SOL**. Premium buffs are **SOL-only**.
 
-| Rarity | Cost Range | Examples |
-|--------|-----------|---------|
-| Common | 30-40 coins | Nitro Boost, Banana Peel, Energy Drink, Lucky Penny |
-| Uncommon | 60-80 coins | Slipstream, Four-Leaf Clover, Rubber Bumpers, Head Start |
-| Rare | 100-140 coins | Shield Wall, Crowd Frenzy, Turbo Charger |
-| Epic | 200-250 coins | Earthquake, Time Warp, Clone Sprint |
-| Legendary | 400-450 coins | Ghost Mode, Photo Finish |
+#### Regular Buffs (Coins or SOL)
+
+| Rarity | Coin Cost | SOL Price | Examples |
+|--------|-----------|-----------|---------|
+| Common | 30-40 | 0.005-0.007 | Nitro Boost, Banana Peel, Energy Drink, Lucky Penny |
+| Uncommon | 60-80 | 0.01-0.013 | Slipstream, Four-Leaf Clover, Rubber Bumpers, Head Start |
+| Rare | 100-140 | 0.018-0.025 | Shield Wall, Crowd Frenzy, Turbo Charger |
+| Epic | 200-250 | 0.04-0.05 | Earthquake, Time Warp, Clone Sprint |
+| Legendary | 400-450 | 0.08-0.09 | Ghost Mode, Photo Finish |
+
+#### Premium Buffs (SOL Only)
+
+| Buff | Rarity | SOL Price | Effect |
+|------|--------|-----------|--------|
+| Warp Drive | Legendary | 0.15 | Teleport to 1st place at 75% mark |
+| Gravity Well | Epic | 0.08 | Pull nearby opponents back 5% at 50% mark |
+| Mirror Image | Epic | 0.07 | Copy the best buff active in the race |
+| Golden Ticket | Rare | 0.03 | +50% coin earnings from this race |
+| Adrenaline Surge | Uncommon | 0.02 | +40% speed burst when dropping below 4th |
+
+All SOL purchases are sent to the treasury wallet: `HtPe6EYLgmT3UzyZeBCLg5vX5JjsxpoggtXkRYYx6oN5`
 
 ### 11.3 Achievements
 
@@ -600,9 +626,10 @@ Each achievement awards a one-time coin bonus on unlock.
 
 - Races run every **4 hours** (6 races per day)
 - At scheduled time, lobby opens for entries
-- **Minimum 6 entries** required to start
-- **Maximum 16 entries** per race
+- **Minimum 6 entries** required to start normally
+- **No maximum racer cap** — unlimited entries allowed
 - **Maximum 2 NFTs per user** per race
+- **Two modes:** Free (earn coins) and Premium (50 PBP entry fee with prize pool)
 
 ### 12.2 Lobby States
 
@@ -611,31 +638,104 @@ waiting → countdown → racing → finished
 ```
 
 1. **waiting:** Accepting entries. If < 6 entries at deadline, extends by 15 min (max 8 extensions = 2 hours)
-2. **countdown:** Min entries met. 30-second countdown before race starts
-3. **racing:** Race simulation running
-4. **finished:** Results recorded. (Or cancelled if max extensions reached with < 6 entries)
+2. **After max extensions:** Minimum drops to **3 racers** (race starts with 3+, never cancels)
+3. **countdown:** Min entries met. 30-second countdown before race starts
+4. **racing:** Race simulation running
+5. **finished:** Results recorded
 
-### 12.3 Lobby Flow (Server-Side)
+### 12.3 Race Modes
+
+| Mode | Entry Fee | Coin Rewards | Prize Pool |
+|------|-----------|-------------|------------|
+| **Free** | None | Yes (placement coins) | None |
+| **Premium** | 50 PBP per NFT | Yes (placement coins) | 40% 1st, 15% 2nd, 10% 3rd, 35% season pool |
+
+Premium race entry fees are deposited to the treasury wallet. Prize pool payouts are in PBP tokens.
+
+### 12.4 Lobby Flow (Server-Side)
 
 ```
-POST /api/races/lobby/join   { userId, characterId, raceId }
-  → Validates: user owns NFT, per-user limit, total limit, no duplicate
+POST /api/races/lobby/join   { userId, characterId, raceId, mode? }
+  → Validates: user owns NFT, per-user limit, no duplicate
+  → For premium: records PBP payment, updates prize pool
   → Uses transaction for race condition safety
 
-POST /api/races/lobby/leave  { userId, characterId, raceId }
+POST /api/races/lobby/leave  { userId, characterId, raceId, mode? }
   → Removes entry
+  → For premium: refunds PBP from prize pool
 
 GET  /api/races/lobby/current
-  → Returns active lobby with entries list
+  → Returns active lobby with entries, mode, prize pool
 ```
 
 ---
 
-## 13. API Reference
+## 13. Monetization & Premium Economy
+
+### 13.1 Revenue Streams
+
+The platform generates revenue through two channels:
+
+1. **SOL Buff Sales** — Users buy buffs with SOL (sent to treasury wallet)
+2. **Premium Race Entry Fees** — 50 PBP per NFT per premium race (35% retained in treasury)
+
+**Treasury Wallet:** `HtPe6EYLgmT3UzyZeBCLg5vX5JjsxpoggtXkRYYx6oN5`
+
+### 13.2 Premium Race Economy
+
+```
+Entry Fee: 50 PBP per NFT per race
+  ├── 40% → 1st place winner
+  ├── 15% → 2nd place
+  ├── 10% → 3rd place
+  └── 35% → Season Prize Pool (treasury)
+```
+
+**Example:** 10 entrants = 500 PBP pool
+- 1st: 200 PBP | 2nd: 75 PBP | 3rd: 50 PBP | Season Pool: 175 PBP
+
+### 13.3 Season Prize Pool
+
+**Files:** `src/engines/seasonPool.ts`, `src/components/SeasonPoolGauge.tsx`
+
+The season prize pool accumulates 35% of all premium race entry fees throughout the season. At season end, the pool is distributed as PBP token prizes from the treasury wallet based on leaderboard standings.
+
+A visual **gauge component** (`SeasonPoolGauge`) is displayed on the race page, showing:
+- Current PBP total in the season pool
+- Number of premium races that contributed
+- Treasury wallet address (abbreviated)
+
+This drives competition by making the growing pot visible to all players.
+
+### 13.4 Unified Buff Shop (Dual Currency)
+
+**File:** `src/components/BuffShop.tsx`
+
+The shop displays all buffs in a single interface with dual-currency pricing:
+
+- **Regular buffs** (16): Show both coin price and SOL price. User chooses which to pay with.
+- **Premium buffs** (5): SOL-only. Marked with "SOL ONLY" badge. Cannot be purchased with coins.
+- **Filter tabs:** All | Common | Uncommon | Rare | Epic | Legendary | SOL Only
+
+SOL purchases trigger a Solana wallet transaction to the treasury wallet. In production, the server validates the on-chain transaction signature before crediting the buff.
+
+### 13.5 SOL Transaction Flow
+
+1. User clicks "Buy (SOL)" on a buff
+2. Frontend creates a SOL transfer instruction to treasury wallet
+3. User signs the transaction with their connected Solana wallet (Phantom, etc.)
+4. On confirmation, frontend calls `POST /api/economy/:userId/buffs/buy-sol` with the tx signature
+5. Server records the purchase in `sol_purchases` table and credits the buff to inventory
+
+**Production TODO:** Server-side Solana RPC verification of `tx_signature` before crediting buffs.
+
+---
+
+## 14. API Reference
 
 **Base URL:** `http://localhost:3001/api`
 
-### Auth
+### 14.1 Auth
 
 | Method | Path | Body | Returns |
 |--------|------|------|---------|
@@ -661,11 +761,12 @@ GET  /api/races/lobby/current
 
 | Method | Path | Body | Returns |
 |--------|------|------|---------|
-| GET | `/races/lobby/current` | — | Lobby object or `null` |
-| POST | `/races/lobby/join` | `{ userId, characterId, raceId }` | `{ message }` |
-| POST | `/races/lobby/leave` | `{ userId, characterId, raceId }` | `{ message }` |
-| POST | `/races/results` | `{ raceId, results[] }` | `{ message }` |
-| GET | `/races/history?limit=20` | — | `[{ race, entries[] }]` |
+| GET | `/races/lobby/current` | — | Lobby object (with `mode`, `prizePool`) or `null` |
+| POST | `/races/lobby/join` | `{ userId, characterId, raceId, mode? }` | `{ message, entryFeePaid? }` |
+| POST | `/races/lobby/leave` | `{ userId, characterId, raceId, mode? }` | `{ message }` |
+| POST | `/races/results` | `{ raceId, results[], mode?, prizePool? }` | `{ message, premiumPrizes? }` |
+| GET | `/races/season-pool` | — | `{ seasonId, totalPBP, totalRaces, treasuryWallet }` |
+| GET | `/races/history?limit=20` | — | `[{ race, entries[], mode, prize_pool }]` |
 | GET | `/races/leaderboard` | — | `[{ nft_id, points, ... }]` |
 
 ### Progression
@@ -683,6 +784,7 @@ GET  /api/races/lobby/current
 | GET | `/economy/:userId` | — | `{ coins, inventory, achievements, playerStats }` |
 | POST | `/economy/:userId/coins/add` | `{ amount }` | `{ message }` |
 | POST | `/economy/:userId/buffs/buy` | `{ buffId, cost }` | `{ message }` |
+| POST | `/economy/:userId/buffs/buy-sol` | `{ buffId, solPrice, txSignature? }` | `{ message, treasuryWallet }` |
 | POST | `/economy/:userId/buffs/consume` | `{ buffId }` | `{ message }` |
 | POST | `/economy/:userId/achievements/unlock` | `{ achievementId, coinReward }` | `{ message }` |
 | POST | `/economy/:userId/stats` | PlayerStats object | `{ message }` |
@@ -695,9 +797,9 @@ GET  /api/races/lobby/current
 
 ---
 
-## 14. Frontend Architecture
+## 15. Frontend Architecture
 
-### 14.1 State Management
+### 15.1 State Management
 
 No Redux or external state library — the app uses three custom hooks:
 
@@ -709,7 +811,7 @@ No Redux or external state library — the app uses three custom hooks:
 
 All hooks implement **optimistic local updates** with **fire-and-forget server sync**. If the API is unreachable, the app continues working from localStorage cache. On next login, data syncs from server.
 
-### 14.2 Data Flow
+### 15.2 Data Flow
 
 ```
 On mount:
@@ -726,7 +828,7 @@ On race complete:
   5. Achievement evaluation runs, new unlocks posted to server
 ```
 
-### 14.3 Pages
+### 15.3 Pages
 
 | Page | Route/State | Key Components |
 |------|------------|----------------|
@@ -736,7 +838,7 @@ On race complete:
 | Leaderboard | `page === "leaderboard"` | Leaderboard |
 | Shop | `page === "shop"` | BuffShop, AchievementsPanel |
 
-### 14.4 API Client
+### 15.4 API Client
 
 **File:** `src/api/client.ts`
 
@@ -746,11 +848,11 @@ The base URL is set by `VITE_API_URL` environment variable (defaults to `http://
 
 ---
 
-## 15. Integration Notes for Your Users Table
+## 16. Integration Notes for Your Users Table
 
 Since you already have your own users table with wallet info, here's how to adapt:
 
-### 15.1 Replace the `users` and `wallets` Tables
+### 16.1 Replace the `users` and `wallets` Tables
 
 The codebase uses two tables for this: `users` (Twitch accounts) and `wallets` (Solana addresses). You can replace both with your existing users table. The key foreign key is `user_id` (VARCHAR(64)), which is used throughout the schema as:
 
@@ -778,7 +880,7 @@ The codebase uses two tables for this: `users` (Twitch accounts) and `wallets` (
 4. **Update `server/routes/wallets.ts`** — Adapt wallet CRUD to read/write from your users table's wallet column(s)
 5. **Update `src/hooks/useAuth.ts`** — Adapt the auth flow to your login system. The frontend expects a `UserAccount` object with `twitchUser`, `wallets`, and `ownedNftIds` fields
 
-### 15.2 NFT Ownership Detection
+### 16.2 NFT Ownership Detection
 
 The `nfts.owner_id` column links NFTs to users. When a user's wallet is known:
 
@@ -789,7 +891,7 @@ The `nfts.owner_id` column links NFTs to users. When a user's wallet is known:
 
 You can do this on wallet link, on login, or on a periodic cron job.
 
-### 15.3 Where `userId` Is Used
+### 16.3 Where `userId` Is Used
 
 Every API route and hook that references `userId` expects a string matching the primary key in your users table. Grep for `userId` or `user_id` to find all usage points:
 
@@ -798,7 +900,7 @@ Every API route and hook that references `userId` expects a string matching the 
 - **API client:** `client.ts` (passes userId to all server calls)
 - **Database:** Every table with a `user_id` column
 
-### 15.4 Minimum Integration
+### 16.4 Minimum Integration
 
 If you want the fastest path to a working app with your users table:
 
@@ -809,7 +911,7 @@ If you want the fastest path to a working app with your users table:
 
 ---
 
-## 16. Deployment Checklist
+## 17. Deployment Checklist
 
 ### Before Launch
 
@@ -823,11 +925,22 @@ If you want the fastest path to a working app with your users table:
 - [ ] Add rate limiting to API endpoints (especially lobby join, economy mutations)
 - [ ] Add authentication middleware to protect API routes (currently no auth tokens required)
 
+### Monetization Setup
+
+- [ ] Verify treasury wallet `HtPe6EYLgmT3UzyZeBCLg5vX5JjsxpoggtXkRYYx6oN5` is correct and accessible
+- [ ] Implement server-side Solana RPC verification of SOL transaction signatures in `POST /economy/:userId/buffs/buy-sol`
+- [ ] Integrate Solana wallet adapter (Phantom, Solflare) for frontend SOL transactions
+- [ ] Implement PBP token transfer for premium race entry fees and prize payouts
+- [ ] Set up season-end PBP distribution script based on leaderboard standings
+- [ ] Configure PBP token contract address and treasury approval
+
 ### Security Considerations
 
 - [ ] **API auth:** Add JWT or session tokens. Currently all API routes are unprotected — anyone who knows a userId can call economy/progression endpoints
 - [ ] **Race result validation:** Race results are currently submitted by the client. In production, run the race simulation server-side using the stored seed and verify results match
 - [ ] **Wallet verification:** Require signed messages to prove wallet ownership before linking
+- [ ] **SOL transaction verification:** Validate all SOL purchase tx signatures on-chain before crediting buffs
+- [ ] **PBP payment verification:** Verify PBP token transfers for premium race entries before allowing lobby joins
 - [ ] **Rate limiting:** Protect coin/buff/achievement endpoints from abuse
 - [ ] **Input validation:** Sanitize all user inputs (addresses, buff IDs, etc.)
 

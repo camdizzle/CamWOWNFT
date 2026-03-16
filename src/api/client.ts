@@ -81,23 +81,26 @@ export const progressionApi = {
 export const raceApi = {
   getCurrentLobby: () => apiFetch<any | null>("/races/lobby/current"),
 
-  joinLobby: (userId: string, characterId: string, raceId: number) =>
-    apiFetch<{ message: string }>("/races/lobby/join", {
+  joinLobby: (userId: string, characterId: string, raceId: number, mode?: string) =>
+    apiFetch<{ message: string; entryFeePaid?: number }>("/races/lobby/join", {
       method: "POST",
-      body: JSON.stringify({ userId, characterId, raceId }),
+      body: JSON.stringify({ userId, characterId, raceId, mode }),
     }),
 
-  leaveLobby: (userId: string, characterId: string, raceId: number) =>
+  leaveLobby: (userId: string, characterId: string, raceId: number, mode?: string) =>
     apiFetch<{ message: string }>("/races/lobby/leave", {
       method: "POST",
-      body: JSON.stringify({ userId, characterId, raceId }),
+      body: JSON.stringify({ userId, characterId, raceId, mode }),
     }),
 
-  saveResults: (raceId: number, results: any[]) =>
-    apiFetch<{ message: string }>("/races/results", {
+  saveResults: (raceId: number, results: any[], mode?: string, prizePool?: number) =>
+    apiFetch<{ message: string; premiumPrizes?: Record<number, number> }>("/races/results", {
       method: "POST",
-      body: JSON.stringify({ raceId, results }),
+      body: JSON.stringify({ raceId, results, mode, prizePool }),
     }),
+
+  getSeasonPool: () =>
+    apiFetch<{ seasonId: number; seasonName: string; totalPBP: number; totalRaces: number; treasuryWallet: string }>("/races/season-pool"),
 
   getHistory: (limit?: number) =>
     apiFetch<any[]>(`/races/history?limit=${limit || 20}`),
@@ -121,6 +124,12 @@ export const economyApi = {
     apiFetch<{ message: string }>(`/economy/${userId}/buffs/buy`, {
       method: "POST",
       body: JSON.stringify({ buffId, cost }),
+    }),
+
+  buyBuffWithSol: (userId: string, buffId: string, solPrice: number, txSignature?: string) =>
+    apiFetch<{ message: string; treasuryWallet: string }>(`/economy/${userId}/buffs/buy-sol`, {
+      method: "POST",
+      body: JSON.stringify({ buffId, solPrice, txSignature }),
     }),
 
   consumeBuff: (userId: string, buffId: string) =>

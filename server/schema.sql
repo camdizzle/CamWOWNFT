@@ -153,6 +153,9 @@ CREATE TABLE race_lobbies (
   scheduled_time  TIMESTAMP     NOT NULL,
   deadline_time   TIMESTAMP     NOT NULL,
   status          ENUM('waiting','countdown','racing','finished') DEFAULT 'waiting',
+  mode            ENUM('free','premium') DEFAULT 'free',
+  entry_fee_pbp   INT           DEFAULT 0,             -- 0 for free, 50 for premium
+  prize_pool      INT           DEFAULT 0,             -- accumulated PBP from entry fees
   created_at      TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (race_id) REFERENCES races(id) ON DELETE SET NULL,
   INDEX idx_lobby_status (status)
@@ -239,6 +242,68 @@ CREATE TABLE race_buff_usage (
   FOREIGN KEY (nft_id) REFERENCES nfts(id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   INDEX idx_rbu_race (race_id)
+);
+
+-- ── Premium Race Payments (PBP entry fee audit log) ──────────────────
+
+CREATE TABLE premium_race_payments (
+  id              INT           AUTO_INCREMENT PRIMARY KEY,
+  race_id         INT           NOT NULL,
+  user_id         VARCHAR(64)   NOT NULL,
+  nft_id          VARCHAR(64)   NOT NULL,
+  amount_pbp      INT           NOT NULL DEFAULT 50,
+  treasury_wallet VARCHAR(100)  NOT NULL,
+  paid_at         TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (race_id) REFERENCES races(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (nft_id) REFERENCES nfts(id) ON DELETE CASCADE,
+  INDEX idx_prp_race (race_id),
+  INDEX idx_prp_user (user_id)
+);
+
+-- ── Premium Race Payouts (PBP prize distributions) ───────────────────
+
+CREATE TABLE premium_race_payouts (
+  id              INT           AUTO_INCREMENT PRIMARY KEY,
+  race_id         INT           NOT NULL,
+  nft_id          VARCHAR(64)   NOT NULL,
+  user_id         VARCHAR(64)   NOT NULL,
+  placement       INT           NOT NULL,
+  amount_pbp      INT           NOT NULL,
+  paid_at         TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (race_id) REFERENCES races(id) ON DELETE CASCADE,
+  FOREIGN KEY (nft_id) REFERENCES nfts(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_prpay_race (race_id)
+);
+
+-- ── Season Prize Pool (35% of premium race fees → end-of-season) ────
+
+CREATE TABLE season_prize_pool (
+  id              INT           AUTO_INCREMENT PRIMARY KEY,
+  season_id       INT           NOT NULL,
+  race_id         INT           NOT NULL,
+  amount_pbp      INT           NOT NULL,
+  contributed_at  TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (season_id) REFERENCES seasons(id) ON DELETE CASCADE,
+  FOREIGN KEY (race_id) REFERENCES races(id) ON DELETE CASCADE,
+  INDEX idx_spp_season (season_id)
+);
+
+-- ── SOL Purchases (audit log for all SOL transactions) ──────────────
+
+CREATE TABLE sol_purchases (
+  id              INT           AUTO_INCREMENT PRIMARY KEY,
+  user_id         VARCHAR(64)   NOT NULL,
+  item_type       ENUM('buff','entry_fee') NOT NULL,
+  item_id         VARCHAR(64)   NOT NULL,              -- buff_id or race_id
+  sol_amount      DECIMAL(18,9) NOT NULL,
+  treasury_wallet VARCHAR(100)  NOT NULL,
+  tx_signature    VARCHAR(128)  DEFAULT NULL,          -- Solana tx signature for verification
+  purchased_at    TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_solp_user (user_id),
+  INDEX idx_solp_tx (tx_signature)
 );
 
 -- ── Insert initial season ────────────────────────────────────────────

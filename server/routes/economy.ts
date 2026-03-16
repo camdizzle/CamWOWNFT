@@ -3,6 +3,8 @@ import pool from "../db.js";
 
 const router = Router();
 
+const TREASURY_WALLET = "HtPe6EYLgmT3UzyZeBCLg5vX5JjsxpoggtXkRYYx6oN5";
+
 // ── Get user economy state ──────────────────────────────────────────────
 
 router.get("/:userId", async (req, res) => {
@@ -101,7 +103,7 @@ router.post("/:userId/coins/add", async (req, res) => {
   }
 });
 
-// ── Buy buff ────────────────────────────────────────────────────────────
+// ── Buy buff (with coins) ──────────────────────────────────────────────
 
 router.post("/:userId/buffs/buy", async (req, res) => {
   const { userId } = req.params;
@@ -144,10 +146,53 @@ router.post("/:userId/buffs/buy", async (req, res) => {
     );
 
     await conn.commit();
-    res.json({ message: "Buff purchased" });
+    res.json({ message: "Buff purchased", currency: "coins" });
   } catch (err) {
     await conn.rollback();
     console.error("Buy buff error:", err);
+    res.status(500).json({ error: "Database error" });
+  } finally {
+    conn.release();
+  }
+});
+
+// ── Buy buff (with SOL) ────────────────────────────────────────────────
+// In production: validate the Solana transaction signature on-chain before
+// crediting the buff. For now, records the purchase and credits inventory.
+
+router.post("/:userId/buffs/buy-sol", async (req, res) => {
+  const { userId } = req.params;
+  const { buffId, solPrice, txSignature } = req.body;
+
+  if (!buffId || typeof solPrice !== "number") {
+    res.status(400).json({ error: "buffId and solPrice required" });
+    return;
+  }
+
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    // Record SOL purchase (audit trail)
+    await conn.execute(
+      `INSERT INTO sol_purchases (user_id, item_type, item_id, sol_amount, treasury_wallet, tx_signature)
+       VALUES (?, 'buff', ?, ?, ?, ?)`,
+      [userId, buffId, solPrice, TREASURY_WALLET, txSignature || null]
+    );
+
+    // Add to inventory
+    await conn.execute(
+      `INSERT INTO buff_inventory (user_id, buff_id, quantity)
+       VALUES (?, ?, 1)
+       ON DUPLICATE KEY UPDATE quantity = quantity + 1`,
+      [userId, buffId]
+    );
+
+    await conn.commit();
+    res.json({ message: "Buff purchased with SOL", currency: "sol", treasuryWallet: TREASURY_WALLET });
+  } catch (err) {
+    await conn.rollback();
+    console.error("Buy buff SOL error:", err);
     res.status(500).json({ error: "Database error" });
   } finally {
     conn.release();
