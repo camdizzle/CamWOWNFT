@@ -21,16 +21,19 @@ export function RacePage({ characters, auth, progression, economy, onUpdateLeade
     for (const result of results) {
       const baseChar = characters.find((c) => c.id === result.characterId);
       if (baseChar) {
-        const gains = progression.applyRaceResult(
+        const { statGains, levelUp } = progression.applyRaceResult(
           result.characterId,
           baseChar.stats,
           result.placement
         );
-        if (gains.some((g) => g.leveledUp)) {
+        if (statGains.some((g) => g.leveledUp)) {
           console.log(
-            `${baseChar.name} leveled up!`,
-            gains.filter((g) => g.leveledUp)
+            `${baseChar.name} stat leveled up!`,
+            statGains.filter((g) => g.leveledUp)
           );
+        }
+        if (levelUp) {
+          console.log(`${baseChar.name} reached Level ${levelUp.newLevel}!`);
         }
       }
     }

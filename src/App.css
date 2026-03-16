@@ -245,6 +245,62 @@ body {
   color: var(--gold);
 }
 
+.level-badge {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  background: linear-gradient(135deg, var(--accent), #a29bfe);
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 900;
+  color: white;
+  letter-spacing: 0.02em;
+}
+
+/* ── NFT Level XP Bar ──────────────────────────────────────────────── */
+
+.nft-level-section {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.nft-level-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.nft-level-badge {
+  background: linear-gradient(135deg, var(--accent), #a29bfe);
+  color: white;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 900;
+}
+
+.nft-level-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.nft-level-bar {
+  height: 8px;
+  background: var(--bg-dark);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.nft-level-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--accent), #a29bfe, #fd79a8);
+  transition: width 0.4s ease;
+}
+
 .card-body {
   padding: 1rem;
 }

@@ -11,8 +11,13 @@ router.get("/:nftId", async (req, res) => {
   const { nftId } = req.params;
 
   try {
-    const [rows] = await pool.execute(
+    const [statRows] = await pool.execute(
       "SELECT stat_key, xp, level FROM stat_progression WHERE nft_id = ?",
+      [nftId]
+    );
+
+    const [levelRows] = await pool.execute(
+      "SELECT xp, level, total_races, total_wins, total_battles, total_battle_wins, last_race_time, last_battle_time FROM nft_levels WHERE nft_id = ?",
       [nftId]
     );
 
@@ -21,11 +26,28 @@ router.get("/:nftId", async (req, res) => {
     for (const key of STAT_KEYS) {
       statProgress[key] = { xp: 0, level: 0 };
     }
-    for (const row of rows as any[]) {
+    for (const row of statRows as any[]) {
       statProgress[row.stat_key] = { xp: row.xp, level: row.level };
     }
 
-    res.json({ nftId, statProgress });
+    const levelData = (levelRows as any[])[0] ?? {
+      xp: 0, level: 0, total_races: 0, total_wins: 0,
+      total_battles: 0, total_battle_wins: 0,
+      last_race_time: null, last_battle_time: null,
+    };
+
+    res.json({
+      nftId,
+      statProgress,
+      xp: levelData.xp,
+      level: levelData.level,
+      totalRaces: levelData.total_races,
+      totalWins: levelData.total_wins,
+      totalBattles: levelData.total_battles,
+      totalBattleWins: levelData.total_battle_wins,
+      lastRaceTime: levelData.last_race_time ? new Date(levelData.last_race_time).getTime() : 0,
+      lastBattleTime: levelData.last_battle_time ? new Date(levelData.last_battle_time).getTime() : 0,
+    });
   } catch (err) {
     console.error("Get progression error:", err);
     res.status(500).json({ error: "Database error" });
@@ -73,11 +95,11 @@ router.post("/batch", async (req, res) => {
   }
 });
 
-// ── Update progression (called after races) ────────────────────────────
+// ── Update progression (called after races and battles) ─────────────
 
 router.put("/:nftId", async (req, res) => {
   const { nftId } = req.params;
-  const { statProgress } = req.body;
+  const { statProgress, xp, level, totalRaces, totalWins, totalBattles, totalBattleWins, lastRaceTime, lastBattleTime } = req.body;
 
   if (!statProgress) {
     res.status(400).json({ error: "statProgress required" });
@@ -88,6 +110,7 @@ router.put("/:nftId", async (req, res) => {
   try {
     await conn.beginTransaction();
 
+    // Update per-stat progression
     for (const key of STAT_KEYS) {
       const sp = statProgress[key];
       if (!sp) continue;
@@ -97,6 +120,30 @@ router.put("/:nftId", async (req, res) => {
          VALUES (?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE xp = VALUES(xp), level = VALUES(level)`,
         [nftId, key, sp.xp, sp.level]
+      );
+    }
+
+    // Update overall NFT level
+    if (level !== undefined) {
+      await conn.execute(
+        `INSERT INTO nft_levels (nft_id, xp, level, total_races, total_wins, total_battles, total_battle_wins, last_race_time, last_battle_time)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE
+           xp = VALUES(xp), level = VALUES(level),
+           total_races = VALUES(total_races), total_wins = VALUES(total_wins),
+           total_battles = VALUES(total_battles), total_battle_wins = VALUES(total_battle_wins),
+           last_race_time = VALUES(last_race_time), last_battle_time = VALUES(last_battle_time)`,
+        [
+          nftId,
+          xp ?? 0,
+          level ?? 0,
+          totalRaces ?? 0,
+          totalWins ?? 0,
+          totalBattles ?? 0,
+          totalBattleWins ?? 0,
+          lastRaceTime ? new Date(lastRaceTime) : null,
+          lastBattleTime ? new Date(lastBattleTime) : null,
+        ]
       );
     }
 

@@ -3,11 +3,13 @@ import type { Stats, StatKey, NFTCharacter } from "../types/nft";
 import {
   createEmptyProgression,
   applyRaceProgression,
+  applyBattleProgression,
   getEffectiveStats,
   totalXpForLevel,
   MAX_PROGRESSION_BONUS,
+  MAX_NFT_LEVEL,
 } from "../engines/progression";
-import type { CharacterProgression, ProgressionGain } from "../engines/progression";
+import type { CharacterProgression, ProgressionGain, LevelUpEvent } from "../engines/progression";
 import { totalPower } from "../data/traitStatMap";
 import { progressionApi } from "../api/client";
 
@@ -28,9 +30,15 @@ function saveCache(data: Record<string, CharacterProgression>) {
 
 // ── Hook ───────────────────────────────────────────────────────────────
 
+export interface ProgressionResult {
+  statGains: ProgressionGain[];
+  levelUp: LevelUpEvent | null;
+}
+
 export interface UseProgressionResult {
   getProgression: (characterId: string) => CharacterProgression;
-  applyRaceResult: (characterId: string, baseStats: Stats, placement: number) => ProgressionGain[];
+  applyRaceResult: (characterId: string, baseStats: Stats, placement: number) => ProgressionResult;
+  applyBattleResult: (characterId: string, baseStats: Stats, won: boolean) => ProgressionResult;
   getEffectiveCharacter: (character: NFTCharacter) => NFTCharacter;
   progressions: Record<string, CharacterProgression>;
   loadFromServer: (nftIds: string[]) => Promise<void>;
@@ -57,12 +65,23 @@ export function useProgression(): UseProgressionResult {
             ...existing,
             characterId: nftId,
             statProgress: { ...existing.statProgress },
+            xp: serverProg.xp ?? existing.xp,
+            level: serverProg.level ?? existing.level,
+            totalRaces: serverProg.totalRaces ?? existing.totalRaces,
+            totalWins: serverProg.totalWins ?? existing.totalWins,
+            totalBattles: serverProg.totalBattles ?? existing.totalBattles,
+            totalBattleWins: serverProg.totalBattleWins ?? existing.totalBattleWins,
+            lastRaceTime: serverProg.lastRaceTime ?? existing.lastRaceTime,
+            lastBattleTime: serverProg.lastBattleTime ?? existing.lastBattleTime,
           };
-          for (const key of Object.keys(serverProg) as StatKey[]) {
-            merged[nftId].statProgress[key] = {
-              xp: serverProg[key].xp,
-              level: serverProg[key].level,
-            };
+          const statProgress = serverProg.statProgress ?? serverProg;
+          for (const key of Object.keys(existing.statProgress) as StatKey[]) {
+            if (statProgress[key]) {
+              merged[nftId].statProgress[key] = {
+                xp: statProgress[key].xp,
+                level: statProgress[key].level,
+              };
+            }
           }
         }
       }
@@ -81,29 +100,51 @@ export function useProgression(): UseProgressionResult {
     [progressions]
   );
 
+  const deepCopyProg = useCallback((characterId: string): CharacterProgression => {
+    const prog = progressions[characterId]
+      ? { ...progressions[characterId], statProgress: { ...progressions[characterId].statProgress } }
+      : createEmptyProgression(characterId);
+    for (const key of Object.keys(prog.statProgress) as StatKey[]) {
+      prog.statProgress[key] = { ...prog.statProgress[key] };
+    }
+    return prog;
+  }, [progressions]);
+
+  const saveProg = useCallback((characterId: string, prog: CharacterProgression) => {
+    const updated = { ...progressions, [characterId]: prog };
+    setProgressions(updated);
+    saveCache(updated);
+    progressionApi.update(characterId, {
+      statProgress: prog.statProgress,
+      xp: prog.xp,
+      level: prog.level,
+      totalRaces: prog.totalRaces,
+      totalWins: prog.totalWins,
+      totalBattles: prog.totalBattles,
+      totalBattleWins: prog.totalBattleWins,
+      lastRaceTime: prog.lastRaceTime,
+      lastBattleTime: prog.lastBattleTime,
+    }).catch(() => {});
+  }, [progressions]);
+
   const applyRaceResult = useCallback(
-    (characterId: string, baseStats: Stats, placement: number): ProgressionGain[] => {
-      const prog = progressions[characterId]
-        ? { ...progressions[characterId], statProgress: { ...progressions[characterId].statProgress } }
-        : createEmptyProgression(characterId);
-
-      // Deep copy statProgress entries
-      for (const key of Object.keys(prog.statProgress) as StatKey[]) {
-        prog.statProgress[key] = { ...prog.statProgress[key] };
-      }
-
-      const gains = applyRaceProgression(prog, baseStats, placement);
-
-      const updated = { ...progressions, [characterId]: prog };
-      setProgressions(updated);
-      saveCache(updated);
-
-      // Server sync: save updated progression
-      progressionApi.update(characterId, prog.statProgress).catch(() => {});
-
-      return gains;
+    (characterId: string, baseStats: Stats, placement: number): ProgressionResult => {
+      const prog = deepCopyProg(characterId);
+      const { statGains, levelUp } = applyRaceProgression(prog, baseStats, placement);
+      saveProg(characterId, prog);
+      return { statGains, levelUp };
     },
-    [progressions]
+    [deepCopyProg, saveProg]
+  );
+
+  const applyBattleResult = useCallback(
+    (characterId: string, baseStats: Stats, won: boolean): ProgressionResult => {
+      const prog = deepCopyProg(characterId);
+      const { statGains, levelUp } = applyBattleProgression(prog, baseStats, won);
+      saveProg(characterId, prog);
+      return { statGains, levelUp };
+    },
+    [deepCopyProg, saveProg]
   );
 
   const getEffectiveCharacter = useCallback(
@@ -124,10 +165,11 @@ export function useProgression(): UseProgressionResult {
   return {
     getProgression,
     applyRaceResult,
+    applyBattleResult,
     getEffectiveCharacter,
     progressions,
     loadFromServer,
   };
 }
 
-export { MAX_PROGRESSION_BONUS, totalXpForLevel };
+export { MAX_PROGRESSION_BONUS, MAX_NFT_LEVEL, totalXpForLevel };

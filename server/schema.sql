@@ -63,6 +63,22 @@ CREATE TABLE stat_progression (
   INDEX idx_progression_nft (nft_id)
 );
 
+-- ── NFT Levels (overall XP & level per NFT) ────────────────────────
+
+CREATE TABLE nft_levels (
+  nft_id          VARCHAR(64)   PRIMARY KEY,
+  xp              INT           DEFAULT 0,
+  level           INT           DEFAULT 0,
+  total_races     INT           DEFAULT 0,
+  total_wins      INT           DEFAULT 0,
+  total_battles   INT           DEFAULT 0,
+  total_battle_wins INT         DEFAULT 0,
+  last_race_time  TIMESTAMP     NULL,
+  last_battle_time TIMESTAMP    NULL,
+  updated_at      TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (nft_id) REFERENCES nfts(id) ON DELETE CASCADE
+);
+
 -- ── Seasons ──────────────────────────────────────────────────────────
 
 CREATE TABLE seasons (

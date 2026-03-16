@@ -34,6 +34,9 @@ export function CharacterCard({
           <span className="placeholder-id">{character.id}</span>
         </div>
         <div className="power-badge">⚔️ {character.totalPower}</div>
+        {progression && progression.level > 0 && (
+          <div className="level-badge">Lv.{progression.level}</div>
+        )}
       </div>
 
       <div className="card-body">

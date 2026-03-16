@@ -69,10 +69,10 @@ export const progressionApi = {
       body: JSON.stringify({ nftIds }),
     }),
 
-  update: (nftId: string, statProgress: any) =>
+  update: (nftId: string, data: any) =>
     apiFetch<{ message: string }>(`/progression/${nftId}`, {
       method: "PUT",
-      body: JSON.stringify({ statProgress }),
+      body: JSON.stringify(data),
     }),
 };
 
