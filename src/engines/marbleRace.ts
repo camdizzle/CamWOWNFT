@@ -90,7 +90,7 @@ function calculateMove(ctx: TickContext): number {
   }
 
   // ── Stamina / Fatigue ────────────────────────────────────────────
-  let fatiguePoint = 50 + stamina * 2;
+  let fatiguePoint = 60 + stamina * 0.8;
   if (hasBuffs("energy_drink")) fatiguePoint += 15; // delayed fatigue
 
   if (entry.position > fatiguePoint) {
