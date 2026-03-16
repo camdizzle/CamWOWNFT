@@ -60,7 +60,8 @@ interface TickContext {
   rand: () => number;
   entry: RaceEntry;
   char: NFTCharacter;
-  buffs: ActiveBuff[];
+  buffs: ActiveBuff[];       // this character's buffs
+  allBuffs: ActiveBuff[];    // all buffs in the race (for global effects like spotlight_curse)
   allEntries: RaceEntry[];
   currentTick: number;
 }
@@ -96,7 +97,7 @@ function getTerrainMultiplier(position: number, stat: string): number {
 }
 
 function calculateMove(ctx: TickContext): number {
-  const { rand, entry, char, buffs, allEntries, currentTick } = ctx;
+  const { rand, entry, char, buffs, allBuffs, allEntries, currentTick } = ctx;
 
   // Apply soft cap to all stats used in race formulas
   const speed = softCap(char.stats.speed);
@@ -150,7 +151,19 @@ function calculateMove(ctx: TickContext): number {
   const ghostActive = hasBuffs("ghost_mode") && entry.position < RACE_DISTANCE * 0.40;
   const shieldActive = hasBuffs("shield_wall");
 
-  if (rand() < 0.08 && !ghostActive && !shieldActive) {
+  // Spotlight Curse: if another racer equipped this buff and this entry is
+  // in 1st during the 40-80% stretch, collision rate triples + speed penalty.
+  // Only affects non-owners — the buyer is never penalized by their own curse.
+  const racePct = entry.position / RACE_DISTANCE;
+  const isLeader = allEntries
+    .filter((e) => e.finishTime == null)
+    .every((e) => e.position <= entry.position);
+  const spotlightPenalty = isLeader && racePct >= 0.40 && racePct <= 0.80 &&
+    allBuffs.some((b) => b.buffId === "spotlight_curse" && b.characterId !== entry.characterId);
+  if (spotlightPenalty) move -= 0.15; // speed tax on 1st place
+  const collisionRate = spotlightPenalty ? 0.24 : 0.08;
+
+  if (rand() < collisionRate && !ghostActive && !shieldActive) {
     let penalty = Math.max(0.1, 1.2 - toughness * 0.06 * tm("toughness"));
     if (hasBuffs("rubber_bumpers")) penalty *= 0.25;
     move -= penalty;
@@ -160,6 +173,11 @@ function calculateMove(ctx: TickContext): number {
   const crowdThreshold = RACE_DISTANCE * (hasBuffs("crowd_frenzy") ? 0.40 : 0.70);
   if (entry.position > crowdThreshold && rand() < charisma * 0.005 * tm("charisma")) {
     move += 1.0;
+  }
+
+  // ── Tailwind: +1.2 speed during 25-65% if NOT in 1st place ──────
+  if (hasBuffs("tailwind") && racePct >= 0.25 && racePct <= 0.65 && !isLeader) {
+    move += 1.2;
   }
 
   // ── Nitro Boost (one-time, random trigger between 20-80%) ────────
@@ -266,6 +284,27 @@ function processGlobalBuffs(
     }
   }
 
+  // Blue Shell: when LEADER reaches 65%, they get hit with 6% penalty
+  // Triggers based on leader's position, not the buff owner's position
+  const blueShells = allBuffs.filter((b) => b.buffId === "blue_shell" && !b.triggered);
+  if (blueShells.length > 0) {
+    const active = allEntries.filter((e) => e.finishTime == null);
+    if (active.length > 1) {
+      const leader = active.reduce((a, b) => (a.position > b.position ? a : b));
+      const leaderPct = leader.position / RACE_DISTANCE;
+      if (leaderPct >= 0.60 && leaderPct <= 0.70) {
+        for (const bs of blueShells) {
+          // Only fire if the owner isn't the leader
+          if (leader.characterId !== bs.characterId) {
+            leader.position = Math.max(0, leader.position - RACE_DISTANCE * 0.06);
+            bs.triggered = true;
+            break; // only one shell fires per tick
+          }
+        }
+      }
+    }
+  }
+
   return events;
 }
 
@@ -356,6 +395,7 @@ export function createRaceSimulator(
         entry,
         char,
         buffs: charBuffs,
+        allBuffs: activeBuffs,
         allEntries: entries,
         currentTick,
       });

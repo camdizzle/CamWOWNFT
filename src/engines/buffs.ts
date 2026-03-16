@@ -13,6 +13,7 @@ export interface BuffDefinition {
   solPrice: number; // SOL price (0 if coins-only, >0 if purchasable with SOL)
   premiumOnly: boolean; // true = SOL purchase only, false = coins OR SOL
   icon: string;
+  tags?: string[]; // e.g. ["anti-leader"] for abuse-limit grouping
 }
 
 // ── How buffs modify the race tick ─────────────────────────────────────
@@ -68,6 +69,17 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     solPrice: 0.005,
     premiumOnly: false,
     icon: "🪙",
+  },
+  {
+    id: "tailwind",
+    name: "Tailwind",
+    description: "If you're NOT in 1st place, get a speed boost during the 25-65% stretch.",
+    rarity: "common",
+    cost: 45,
+    solPrice: 0.008,
+    premiumOnly: false,
+    icon: "🌬️",
+    tags: ["anti-leader"],
   },
 
   // ─── Uncommon (60-90 coins OR 0.01-0.015 SOL) ────────────────────
@@ -143,6 +155,17 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     premiumOnly: false,
     icon: "🔥",
   },
+  {
+    id: "spotlight_curse",
+    name: "Spotlight Curse",
+    description: "The leader's collision rate triples and speed drops during the 40-80% stretch.",
+    rarity: "rare",
+    cost: 110,
+    solPrice: 0.02,
+    premiumOnly: false,
+    icon: "🔦",
+    tags: ["anti-leader"],
+  },
 
   // ─── Epic (200-300 coins OR 0.04-0.06 SOL) ─────────────────────
   {
@@ -174,6 +197,17 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     solPrice: 0.045,
     premiumOnly: false,
     icon: "👥",
+  },
+  {
+    id: "blue_shell",
+    name: "Blue Shell",
+    description: "When the leader reaches 65%, they get hit with a 6% position penalty.",
+    rarity: "epic",
+    cost: 180,
+    solPrice: 0.035,
+    premiumOnly: false,
+    icon: "🐚",
+    tags: ["anti-leader"],
   },
 
   // ─── Legendary (400-500 coins OR 0.08-0.1 SOL) ────────────────
@@ -254,6 +288,36 @@ export const BUFF_CATALOG: BuffDefinition[] = [
 export const BUFF_MAP = new Map(BUFF_CATALOG.map((b) => [b.id, b]));
 
 export const MAX_BUFFS_PER_ENTRY = 2;
+
+// ── Anti-leader buff abuse limits ────────────────────────────────────
+// Prevents a lobby from stacking too many leader-targeting buffs.
+export const MAX_SAME_ANTI_LEADER_PER_RACE = 2; // max 2 of the same anti-leader buff across all entrants
+export const MAX_TOTAL_ANTI_LEADER_PER_RACE = 4; // max 4 anti-leader buffs total in one race
+
+export const ANTI_LEADER_BUFF_IDS = new Set(
+  BUFF_CATALOG.filter((b) => b.tags?.includes("anti-leader")).map((b) => b.id)
+);
+
+/** Validate whether adding a buff to the race would violate anti-leader limits. */
+export function canEquipAntiLeaderBuff(
+  buffId: string,
+  allEquippedBuffs: ActiveBuff[]
+): { allowed: boolean; reason?: string } {
+  if (!ANTI_LEADER_BUFF_IDS.has(buffId)) return { allowed: true };
+
+  const antiLeaderBuffs = allEquippedBuffs.filter((b) => ANTI_LEADER_BUFF_IDS.has(b.buffId));
+
+  if (antiLeaderBuffs.length >= MAX_TOTAL_ANTI_LEADER_PER_RACE) {
+    return { allowed: false, reason: `Max ${MAX_TOTAL_ANTI_LEADER_PER_RACE} anti-leader buffs allowed per race.` };
+  }
+
+  const sameCount = antiLeaderBuffs.filter((b) => b.buffId === buffId).length;
+  if (sameCount >= MAX_SAME_ANTI_LEADER_PER_RACE) {
+    return { allowed: false, reason: `Max ${MAX_SAME_ANTI_LEADER_PER_RACE} of the same anti-leader buff per race.` };
+  }
+
+  return { allowed: true };
+}
 
 // ── Rarity colors ──────────────────────────────────────────────────────
 
