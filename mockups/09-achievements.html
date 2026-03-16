@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CamWOW Arena — Achievements</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-dark: #0a0a1a; --bg-card: #141428; --bg-surface: #1a1a35;
+  --bg-hover: #222250; --border: #2a2a55; --text: #e0e0f0;
+  --text-muted: #8888aa; --accent: #6c5ce7; --accent-glow: #a29bfe;
+  --success: #55efc4; --danger: #ff6b6b; --warning: #ffeaa7; --gold: #ffd700;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "Inter", -apple-system, sans-serif; background: var(--bg-dark); color: var(--text); }
+.top-nav { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 2rem; background: var(--bg-surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+.nav-brand { display: flex; align-items: center; gap: 0.5rem; }
+.brand-text { font-size: 1.25rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-glow), #fd79a8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.nav-links { display: flex; gap: 0.25rem; }
+.nav-link { background: none; border: none; color: var(--text-muted); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-family: inherit; }
+.nav-link.active { background: var(--accent); color: white; }
+.auth-bar { display: flex; align-items: center; gap: 0.75rem; }
+.nav-coins { display: flex; align-items: center; gap: 0.3rem; background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3); padding: 0.3rem 0.75rem; border-radius: 20px; font-weight: 700; }
+.coin-amount { color: var(--gold); font-size: 0.9rem; }
+.auth-name { font-weight: 600; font-size: 0.85rem; }
+.btn { padding: 0.6rem 1.5rem; border-radius: 8px; border: none; cursor: pointer; font-size: 0.95rem; font-weight: 600; font-family: inherit; }
+.btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+.btn-danger { background: var(--danger); color: white; }
+.main-content { flex: 1; padding: 2rem; max-width: 1200px; margin: 0 auto; width: 100%; }
+.page-header { margin-bottom: 1.5rem; }
+.page-header h1 { font-size: 1.8rem; margin-bottom: 0.25rem; }
+.subtitle { color: var(--text-muted); font-size: 0.9rem; }
+
+/* Progress Summary */
+.ach-summary { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.ach-summary-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.5rem; text-align: center; flex: 1; min-width: 150px; }
+.ach-summary-number { font-size: 1.8rem; font-weight: 900; }
+.ach-summary-label { font-size: 0.8rem; color: var(--text-muted); }
+.ach-progress { color: var(--accent-glow); }
+.ach-unlocked { color: var(--success); }
+.ach-points { color: var(--gold); }
+
+/* Category Tabs */
+.ach-tabs { display: flex; gap: 0.25rem; margin-bottom: 1.25rem; background: var(--bg-card); border-radius: 10px; border: 1px solid var(--border); overflow: hidden; width: fit-content; flex-wrap: wrap; }
+.ach-tab { padding: 0.5rem 1.25rem; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.85rem; font-family: inherit; font-weight: 600; }
+.ach-tab.active { background: var(--accent); color: white; }
+
+/* Achievement Grid */
+.ach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+.ach-card { background: var(--bg-card); border: 2px solid var(--border); border-radius: 12px; padding: 1.25rem; display: flex; gap: 1rem; transition: all 0.2s; }
+.ach-card.unlocked { border-color: var(--success); background: rgba(85,239,196,0.04); }
+.ach-card.locked { opacity: 0.5; }
+.ach-icon { font-size: 2.5rem; flex-shrink: 0; display: flex; align-items: center; }
+.ach-info { flex: 1; }
+.ach-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.2rem; display: flex; align-items: center; gap: 0.5rem; }
+.ach-check { color: var(--success); font-size: 0.8rem; }
+.ach-desc { color: var(--text-muted); font-size: 0.8rem; line-height: 1.4; margin-bottom: 0.5rem; }
+.ach-reward { font-size: 0.75rem; color: var(--gold); font-weight: 600; margin-bottom: 0.4rem; }
+.ach-bar { height: 6px; background: var(--bg-dark); border-radius: 3px; overflow: hidden; }
+.ach-bar-fill { height: 100%; border-radius: 3px; }
+.ach-bar-text { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.2rem; }
+</style>
+</head>
+<body>
+
+<div style="background:var(--bg-dark);min-height:100vh;">
+  <nav class="top-nav">
+    <div class="nav-brand"><span style="font-size:1.5rem;">🎮</span><span class="brand-text">CamWOW Arena</span></div>
+    <div class="nav-links">
+      <button class="nav-link">Collection</button>
+      <button class="nav-link">Race</button>
+      <button class="nav-link">Battle</button>
+      <button class="nav-link">Leaderboard</button>
+      <button class="nav-link">Shop</button>
+    </div>
+    <div class="auth-bar">
+      <div class="nav-coins"><span>🪙</span><span class="coin-amount">1,250</span></div>
+      <span class="auth-name">👤 camdizzle</span>
+      <button class="btn btn-danger btn-sm">Logout</button>
+    </div>
+  </nav>
+
+  <div class="main-content">
+    <div class="page-header">
+      <h1>🏅 Achievements</h1>
+      <p class="subtitle">Complete challenges to earn bonus coins and bragging rights</p>
+    </div>
+
+    <!-- Summary -->
+    <div class="ach-summary">
+      <div class="ach-summary-card">
+        <div class="ach-summary-number ach-progress">8/24</div>
+        <div class="ach-summary-label">Completed</div>
+      </div>
+      <div class="ach-summary-card">
+        <div class="ach-summary-number ach-unlocked">33%</div>
+        <div class="ach-summary-label">Completion Rate</div>
+      </div>
+      <div class="ach-summary-card">
+        <div class="ach-summary-number ach-points">1,850</div>
+        <div class="ach-summary-label">Achievement Points</div>
+      </div>
+      <div class="ach-summary-card">
+        <div class="ach-summary-number" style="color:var(--gold);">🪙 750</div>
+        <div class="ach-summary-label">Bonus Coins Earned</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="ach-tabs">
+      <button class="ach-tab active">All</button>
+      <button class="ach-tab">Racing</button>
+      <button class="ach-tab">Battle</button>
+      <button class="ach-tab">Collection</button>
+      <button class="ach-tab">Social</button>
+    </div>
+
+    <!-- Grid -->
+    <div class="ach-grid">
+      <!-- Unlocked -->
+      <div class="ach-card unlocked">
+        <div class="ach-icon">🏁</div>
+        <div class="ach-info">
+          <div class="ach-name">First Race <span class="ach-check">✓</span></div>
+          <div class="ach-desc">Complete your first marble race</div>
+          <div class="ach-reward">🪙 +50 Coins | 100 pts</div>
+        </div>
+      </div>
+
+      <div class="ach-card unlocked">
+        <div class="ach-icon">🥇</div>
+        <div class="ach-info">
+          <div class="ach-name">Gold Rush <span class="ach-check">✓</span></div>
+          <div class="ach-desc">Win first place in a race</div>
+          <div class="ach-reward">🪙 +100 Coins | 200 pts</div>
+        </div>
+      </div>
+
+      <div class="ach-card unlocked">
+        <div class="ach-icon">⚔️</div>
+        <div class="ach-info">
+          <div class="ach-name">Arena Debut <span class="ach-check">✓</span></div>
+          <div class="ach-desc">Win your first 1v1 battle</div>
+          <div class="ach-reward">🪙 +50 Coins | 100 pts</div>
+        </div>
+      </div>
+
+      <div class="ach-card unlocked">
+        <div class="ach-icon">🔥</div>
+        <div class="ach-info">
+          <div class="ach-name">Hot Streak <span class="ach-check">✓</span></div>
+          <div class="ach-desc">Win 3 races in a row</div>
+          <div class="ach-reward">🪙 +150 Coins | 300 pts</div>
+        </div>
+      </div>
+
+      <!-- In Progress -->
+      <div class="ach-card">
+        <div class="ach-icon">🏆</div>
+        <div class="ach-info">
+          <div class="ach-name">Speed Demon</div>
+          <div class="ach-desc">Win 25 races total</div>
+          <div class="ach-reward">🪙 +200 Coins | 400 pts</div>
+          <div class="ach-bar"><div class="ach-bar-fill" style="width:72%;background:linear-gradient(90deg,var(--accent),var(--success));"></div></div>
+          <div class="ach-bar-text">18 / 25 races won</div>
+        </div>
+      </div>
+
+      <div class="ach-card">
+        <div class="ach-icon">💰</div>
+        <div class="ach-info">
+          <div class="ach-name">Premium Player</div>
+          <div class="ach-desc">Enter 10 premium races</div>
+          <div class="ach-reward">🪙 +300 Coins | 500 pts</div>
+          <div class="ach-bar"><div class="ach-bar-fill" style="width:40%;background:linear-gradient(90deg,var(--gold),#ffeaa7);"></div></div>
+          <div class="ach-bar-text">4 / 10 premium races</div>
+        </div>
+      </div>
+
+      <div class="ach-card">
+        <div class="ach-icon">🛡️</div>
+        <div class="ach-info">
+          <div class="ach-name">Battle Hardened</div>
+          <div class="ach-desc">Win 50 battles</div>
+          <div class="ach-reward">🪙 +250 Coins | 500 pts</div>
+          <div class="ach-bar"><div class="ach-bar-fill" style="width:24%;background:linear-gradient(90deg,var(--danger),#fd79a8);"></div></div>
+          <div class="ach-bar-text">12 / 50 battles won</div>
+        </div>
+      </div>
+
+      <div class="ach-card">
+        <div class="ach-icon">🛒</div>
+        <div class="ach-info">
+          <div class="ach-name">Big Spender</div>
+          <div class="ach-desc">Buy 20 buffs from the shop</div>
+          <div class="ach-reward">🪙 +100 Coins | 200 pts</div>
+          <div class="ach-bar"><div class="ach-bar-fill" style="width:55%;background:linear-gradient(90deg,#00ffa3,#03e1ff);"></div></div>
+          <div class="ach-bar-text">11 / 20 buffs purchased</div>
+        </div>
+      </div>
+
+      <!-- Locked -->
+      <div class="ach-card locked">
+        <div class="ach-icon">👑</div>
+        <div class="ach-info">
+          <div class="ach-name">Season Champion</div>
+          <div class="ach-desc">Finish #1 on the leaderboard at end of season</div>
+          <div class="ach-reward">🪙 +1,000 Coins | 1,000 pts</div>
+          <div class="ach-bar"><div class="ach-bar-fill" style="width:0%;"></div></div>
+          <div class="ach-bar-text">Season in progress</div>
+        </div>
+      </div>
+
+      <div class="ach-card locked">
+        <div class="ach-icon">🌟</div>
+        <div class="ach-info">
+          <div class="ach-name">Collector's Pride</div>
+          <div class="ach-desc">Own 10 or more CamWOW NFTs</div>
+          <div class="ach-reward">🪙 +500 Coins | 750 pts</div>
+          <div class="ach-bar"><div class="ach-bar-fill" style="width:30%;background:linear-gradient(90deg,var(--accent-glow),#fd79a8);"></div></div>
+          <div class="ach-bar-text">3 / 10 NFTs owned</div>
+        </div>
+      </div>
+
+      <div class="ach-card locked">
+        <div class="ach-icon">🎯</div>
+        <div class="ach-info">
+          <div class="ach-name">Perfect Game</div>
+          <div class="ach-desc">Win a race where all your entries place in top 3</div>
+          <div class="ach-reward">🪙 +200 Coins | 400 pts</div>
+          <div class="ach-bar"><div class="ach-bar-fill" style="width:0%;"></div></div>
+          <div class="ach-bar-text">Not yet achieved</div>
+        </div>
+      </div>
+
+      <div class="ach-card locked">
+        <div class="ach-icon">⚡</div>
+        <div class="ach-info">
+          <div class="ach-name">Max Power</div>
+          <div class="ach-desc">Level up any single stat to max progression bonus (+10)</div>
+          <div class="ach-reward">🪙 +300 Coins | 500 pts</div>
+          <div class="ach-bar"><div class="ach-bar-fill" style="width:0%;"></div></div>
+          <div class="ach-bar-text">Not yet achieved</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

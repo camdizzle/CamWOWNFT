@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CamWOW Arena — Leaderboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-dark: #0a0a1a; --bg-card: #141428; --bg-surface: #1a1a35;
+  --bg-hover: #222250; --border: #2a2a55; --text: #e0e0f0;
+  --text-muted: #8888aa; --accent: #6c5ce7; --accent-glow: #a29bfe;
+  --success: #55efc4; --danger: #ff6b6b; --warning: #ffeaa7; --gold: #ffd700;
+  --silver: #c0c0c0; --bronze: #cd7f32;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "Inter", -apple-system, sans-serif; background: var(--bg-dark); color: var(--text); }
+.top-nav { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 2rem; background: var(--bg-surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+.nav-brand { display: flex; align-items: center; gap: 0.5rem; }
+.brand-text { font-size: 1.25rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-glow), #fd79a8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.nav-links { display: flex; gap: 0.25rem; }
+.nav-link { background: none; border: none; color: var(--text-muted); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-family: inherit; }
+.nav-link.active { background: var(--accent); color: white; }
+.auth-bar { display: flex; align-items: center; gap: 0.75rem; }
+.nav-coins { display: flex; align-items: center; gap: 0.3rem; background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3); padding: 0.3rem 0.75rem; border-radius: 20px; font-weight: 700; }
+.coin-amount { color: var(--gold); font-size: 0.9rem; }
+.auth-name { font-weight: 600; font-size: 0.85rem; }
+.btn { padding: 0.6rem 1.5rem; border-radius: 8px; border: none; cursor: pointer; font-size: 0.95rem; font-weight: 600; font-family: inherit; }
+.btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+.btn-danger { background: var(--danger); color: white; }
+.main-content { flex: 1; padding: 2rem; max-width: 1200px; margin: 0 auto; width: 100%; }
+.page-header { margin-bottom: 1.5rem; }
+.page-header h1 { font-size: 1.8rem; margin-bottom: 0.25rem; }
+.subtitle { color: var(--text-muted); font-size: 0.9rem; }
+
+/* Season Info */
+.season-info { background: linear-gradient(135deg, rgba(108,92,231,0.1), rgba(253,121,168,0.05)); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.season-name { font-weight: 700; font-size: 1.1rem; }
+.season-dates { color: var(--text-muted); font-size: 0.85rem; }
+.season-prize { display: flex; align-items: center; gap: 0.5rem; background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3); padding: 0.5rem 1rem; border-radius: 10px; }
+.season-prize-label { font-size: 0.8rem; color: var(--text-muted); }
+.season-prize-value { font-size: 1.2rem; font-weight: 900; color: var(--gold); }
+
+/* Tabs */
+.leaderboard-tabs { display: flex; gap: 0.25rem; margin-bottom: 1.25rem; background: var(--bg-card); border-radius: 10px; border: 1px solid var(--border); overflow: hidden; width: fit-content; }
+.tab-btn { padding: 0.5rem 1.25rem; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.85rem; font-family: inherit; font-weight: 600; }
+.tab-btn.active { background: var(--accent); color: white; }
+
+/* Table */
+.lb-table { width: 100%; border-collapse: separate; border-spacing: 0 0.3rem; }
+.lb-table th { text-align: left; padding: 0.5rem 1rem; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.lb-table td { padding: 0.65rem 1rem; background: var(--bg-card); font-size: 0.9rem; }
+.lb-table tr td:first-child { border-radius: 8px 0 0 8px; }
+.lb-table tr td:last-child { border-radius: 0 8px 8px 0; }
+.lb-rank { font-weight: 900; width: 50px; }
+.lb-rank-gold { color: var(--gold); }
+.lb-rank-silver { color: var(--silver); }
+.lb-rank-bronze { color: var(--bronze); }
+.lb-nft { display: flex; align-items: center; gap: 0.5rem; }
+.lb-nft-emoji { font-size: 1.2rem; }
+.lb-nft-name { font-weight: 600; }
+.lb-owner { color: var(--text-muted); font-size: 0.85rem; }
+.lb-pts { font-weight: 700; color: var(--accent-glow); text-align: right; }
+.lb-wins { text-align: center; color: var(--success); font-weight: 600; }
+.lb-races { text-align: center; color: var(--text-muted); }
+.lb-power { text-align: center; color: var(--gold); font-weight: 600; }
+.lb-mine { position: relative; }
+.lb-mine td { background: rgba(108,92,231,0.12); border-top: 1px solid var(--accent); border-bottom: 1px solid var(--accent); }
+.lb-mine td:first-child { border-left: 3px solid var(--accent); }
+
+/* Podium */
+.podium { display: flex; justify-content: center; align-items: flex-end; gap: 1rem; margin-bottom: 2rem; padding: 1rem 0; }
+.podium-spot { text-align: center; background: var(--bg-card); border-radius: 12px; border: 2px solid var(--border); padding: 1rem; min-width: 160px; }
+.podium-spot.first { transform: translateY(-20px); border-color: var(--gold); box-shadow: 0 0 30px rgba(255,215,0,0.15); }
+.podium-spot.second { border-color: var(--silver); }
+.podium-spot.third { border-color: var(--bronze); }
+.podium-medal { font-size: 2rem; margin-bottom: 0.25rem; }
+.podium-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.15rem; }
+.podium-owner { color: var(--text-muted); font-size: 0.75rem; margin-bottom: 0.25rem; }
+.podium-score { font-weight: 900; font-size: 1.1rem; color: var(--accent-glow); }
+</style>
+</head>
+<body>
+
+<div style="background:var(--bg-dark);min-height:100vh;">
+  <nav class="top-nav">
+    <div class="nav-brand"><span style="font-size:1.5rem;">🎮</span><span class="brand-text">CamWOW Arena</span></div>
+    <div class="nav-links">
+      <button class="nav-link">Collection</button>
+      <button class="nav-link">Race</button>
+      <button class="nav-link">Battle</button>
+      <button class="nav-link active">Leaderboard</button>
+      <button class="nav-link">Shop</button>
+    </div>
+    <div class="auth-bar">
+      <div class="nav-coins"><span>🪙</span><span class="coin-amount">1,250</span></div>
+      <span class="auth-name">👤 camdizzle</span>
+      <button class="btn btn-danger btn-sm">Logout</button>
+    </div>
+  </nav>
+
+  <div class="main-content">
+    <div class="page-header">
+      <h1>🏆 Season Leaderboard</h1>
+      <p class="subtitle">Top competitors ranked by total season points</p>
+    </div>
+
+    <!-- Season Info -->
+    <div class="season-info">
+      <div>
+        <div class="season-name">Season 1 — Genesis</div>
+        <div class="season-dates">Jan 1, 2026 — Mar 31, 2026 (15 days remaining)</div>
+      </div>
+      <div class="season-prize">
+        <span class="season-prize-label">Prize Pool:</span>
+        <span class="season-prize-value">2,590 PBP</span>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="leaderboard-tabs">
+      <button class="tab-btn active">Overall</button>
+      <button class="tab-btn">Racing</button>
+      <button class="tab-btn">Battles</button>
+      <button class="tab-btn">By Owner</button>
+    </div>
+
+    <!-- Podium -->
+    <div class="podium">
+      <div class="podium-spot second">
+        <div class="podium-medal">🥈</div>
+        <div class="podium-name">Neon Viper</div>
+        <div class="podium-owner">@streamking</div>
+        <div class="podium-score">2,840 pts</div>
+      </div>
+      <div class="podium-spot first">
+        <div class="podium-medal">🥇</div>
+        <div class="podium-name">The 420</div>
+        <div class="podium-owner">@camdizzle</div>
+        <div class="podium-score">3,150 pts</div>
+      </div>
+      <div class="podium-spot third">
+        <div class="podium-medal">🥉</div>
+        <div class="podium-name">Golden Sage</div>
+        <div class="podium-owner">@camdizzle</div>
+        <div class="podium-score">2,610 pts</div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <table class="lb-table">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>NFT</th>
+          <th>Owner</th>
+          <th style="text-align:center;">Wins</th>
+          <th style="text-align:center;">Races</th>
+          <th style="text-align:center;">Power</th>
+          <th style="text-align:right;">Points</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="lb-mine">
+          <td class="lb-rank lb-rank-gold">🥇 1</td>
+          <td><div class="lb-nft"><span class="lb-nft-emoji">🔥</span><span class="lb-nft-name">The 420</span></div></td>
+          <td class="lb-owner">@camdizzle</td>
+          <td class="lb-wins">18</td>
+          <td class="lb-races">32</td>
+          <td class="lb-power">⚡ 76</td>
+          <td class="lb-pts">3,150</td>
+        </tr>
+        <tr>
+          <td class="lb-rank lb-rank-silver">🥈 2</td>
+          <td><div class="lb-nft"><span class="lb-nft-emoji">🐍</span><span class="lb-nft-name">Neon Viper</span></div></td>
+          <td class="lb-owner">@streamking</td>
+          <td class="lb-wins">15</td>
+          <td class="lb-races">30</td>
+          <td class="lb-power">⚡ 62</td>
+          <td class="lb-pts">2,840</td>
+        </tr>
+        <tr class="lb-mine">
+          <td class="lb-rank lb-rank-bronze">🥉 3</td>
+          <td><div class="lb-nft"><span class="lb-nft-emoji">✨</span><span class="lb-nft-name">Golden Sage</span></div></td>
+          <td class="lb-owner">@camdizzle</td>
+          <td class="lb-wins">12</td>
+          <td class="lb-races">28</td>
+          <td class="lb-power">⚡ 66</td>
+          <td class="lb-pts">2,610</td>
+        </tr>
+        <tr>
+          <td class="lb-rank">4</td>
+          <td><div class="lb-nft"><span class="lb-nft-emoji">🚀</span><span class="lb-nft-name">Cosmic Rider</span></div></td>
+          <td class="lb-owner">@astro_joe</td>
+          <td class="lb-wins">11</td>
+          <td class="lb-races">25</td>
+          <td class="lb-power">⚡ 58</td>
+          <td class="lb-pts">2,380</td>
+        </tr>
+        <tr>
+          <td class="lb-rank">5</td>
+          <td><div class="lb-nft"><span class="lb-nft-emoji">🛡️</span><span class="lb-nft-name">Silver Sentinel</span></div></td>
+          <td class="lb-owner">@shield_main</td>
+          <td class="lb-wins">10</td>
+          <td class="lb-races">26</td>
+          <td class="lb-power">⚡ 57</td>
+          <td class="lb-pts">2,150</td>
+        </tr>
+        <tr>
+          <td class="lb-rank">6</td>
+          <td><div class="lb-nft"><span class="lb-nft-emoji">👻</span><span class="lb-nft-name">Shadow Runner</span></div></td>
+          <td class="lb-owner">@dark_racer</td>
+          <td class="lb-wins">9</td>
+          <td class="lb-races">24</td>
+          <td class="lb-power">⚡ 51</td>
+          <td class="lb-pts">1,920</td>
+        </tr>
+        <tr>
+          <td class="lb-rank">7</td>
+          <td><div class="lb-nft"><span class="lb-nft-emoji">💎</span><span class="lb-nft-name">Crystal Knight</span></div></td>
+          <td class="lb-owner">@gem_lord</td>
+          <td class="lb-wins">7</td>
+          <td class="lb-races">22</td>
+          <td class="lb-power">⚡ 48</td>
+          <td class="lb-pts">1,680</td>
+        </tr>
+        <tr>
+          <td class="lb-rank">8</td>
+          <td><div class="lb-nft"><span class="lb-nft-emoji">⚔️</span><span class="lb-nft-name">Bronze Brawler</span></div></td>
+          <td class="lb-owner">@fighter99</td>
+          <td class="lb-wins">6</td>
+          <td class="lb-races">20</td>
+          <td class="lb-power">⚡ 45</td>
+          <td class="lb-pts">1,440</td>
+        </tr>
+        <tr>
+          <td class="lb-rank">9</td>
+          <td><div class="lb-nft"><span class="lb-nft-emoji">🌊</span><span class="lb-nft-name">Wave Dancer</span></div></td>
+          <td class="lb-owner">@ocean_vibes</td>
+          <td class="lb-wins">5</td>
+          <td class="lb-races">18</td>
+          <td class="lb-power">⚡ 42</td>
+          <td class="lb-pts">1,210</td>
+        </tr>
+        <tr>
+          <td class="lb-rank">10</td>
+          <td><div class="lb-nft"><span class="lb-nft-emoji">😎</span><span class="lb-nft-name">Everyday Cam</span></div></td>
+          <td class="lb-owner">@chill_cam</td>
+          <td class="lb-wins">4</td>
+          <td class="lb-races">16</td>
+          <td class="lb-power">⚡ 36</td>
+          <td class="lb-pts">980</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</body>
+</html>

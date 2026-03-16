@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CamWOW Arena — Buff Shop</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-dark: #0a0a1a; --bg-card: #141428; --bg-surface: #1a1a35;
+  --bg-hover: #222250; --border: #2a2a55; --text: #e0e0f0;
+  --text-muted: #8888aa; --accent: #6c5ce7; --accent-glow: #a29bfe;
+  --success: #55efc4; --danger: #ff6b6b; --warning: #ffeaa7; --gold: #ffd700;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "Inter", -apple-system, sans-serif; background: var(--bg-dark); color: var(--text); }
+.top-nav { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 2rem; background: var(--bg-surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+.nav-brand { display: flex; align-items: center; gap: 0.5rem; }
+.brand-text { font-size: 1.25rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-glow), #fd79a8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.nav-links { display: flex; gap: 0.25rem; }
+.nav-link { background: none; border: none; color: var(--text-muted); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-family: inherit; }
+.nav-link.active { background: var(--accent); color: white; }
+.auth-bar { display: flex; align-items: center; gap: 0.75rem; }
+.nav-coins { display: flex; align-items: center; gap: 0.3rem; background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3); padding: 0.3rem 0.75rem; border-radius: 20px; font-weight: 700; }
+.coin-amount { color: var(--gold); font-size: 0.9rem; }
+.auth-name { font-weight: 600; font-size: 0.85rem; }
+.btn { padding: 0.6rem 1.5rem; border-radius: 8px; border: none; cursor: pointer; font-size: 0.95rem; font-weight: 600; font-family: inherit; transition: all 0.2s; }
+.btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: var(--accent-glow); }
+.btn-danger { background: var(--danger); color: white; }
+.btn-secondary { background: var(--bg-surface); color: var(--text); border: 1px solid var(--border); }
+.main-content { flex: 1; padding: 2rem; max-width: 1400px; margin: 0 auto; width: 100%; }
+.page-header { margin-bottom: 1.5rem; }
+.page-header h1 { font-size: 1.8rem; margin-bottom: 0.25rem; }
+.subtitle { color: var(--text-muted); font-size: 0.9rem; }
+
+/* Balance Bar */
+.balance-bar { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.balance-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+.balance-label { font-size: 0.8rem; color: var(--text-muted); }
+.balance-value { font-size: 1.1rem; font-weight: 900; }
+.balance-coins { color: var(--gold); }
+.balance-sol { color: #00ffa3; }
+
+/* Filter Tabs */
+.shop-tabs { display: flex; gap: 0.25rem; margin-bottom: 1.25rem; background: var(--bg-card); border-radius: 10px; border: 1px solid var(--border); overflow: hidden; width: fit-content; }
+.shop-tab { padding: 0.5rem 1.25rem; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.85rem; font-family: inherit; font-weight: 600; }
+.shop-tab.active { background: var(--accent); color: white; }
+.shop-tab.sol-only { color: #00ffa3; }
+.shop-tab.sol-only.active { background: linear-gradient(135deg, #00ffa3, #03e1ff); color: #0a0a1a; }
+
+/* Inventory */
+.inventory { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
+.inventory h3 { font-size: 0.95rem; margin-bottom: 0.5rem; }
+.inventory-grid { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.inv-item { display: flex; align-items: center; gap: 0.3rem; background: var(--bg-surface); padding: 0.3rem 0.6rem; border-radius: 6px; font-size: 0.8rem; }
+.inv-count { font-weight: 700; color: var(--accent-glow); }
+
+/* Shop Grid */
+.shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+.shop-card { background: var(--bg-card); border: 2px solid var(--border); border-radius: 12px; padding: 1.25rem; transition: all 0.2s; }
+.shop-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 25px rgba(108,92,231,0.15); }
+.shop-card.premium { border-color: rgba(0,255,163,0.3); }
+.shop-card.premium:hover { border-color: #00ffa3; box-shadow: 0 8px 25px rgba(0,255,163,0.15); }
+.shop-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; }
+.shop-card-name { font-size: 1rem; font-weight: 700; }
+.shop-badge { padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+.badge-regular { background: rgba(108,92,231,0.2); color: var(--accent-glow); }
+.badge-premium { background: linear-gradient(135deg, rgba(0,255,163,0.2), rgba(3,225,255,0.2)); color: #00ffa3; border: 1px solid rgba(0,255,163,0.3); }
+.shop-card-desc { color: var(--text-muted); font-size: 0.8rem; line-height: 1.4; margin-bottom: 0.75rem; }
+.shop-card-stat { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; font-size: 0.8rem; }
+.stat-effect { color: var(--success); font-weight: 600; }
+.stat-duration { color: var(--text-muted); }
+.shop-card-prices { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+.price-btn { flex: 1; padding: 0.5rem; border-radius: 8px; border: none; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 0.85rem; transition: all 0.2s; }
+.price-coins { background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3); color: var(--gold); }
+.price-coins:hover { background: rgba(255,215,0,0.2); }
+.price-sol { background: rgba(0,255,163,0.1); border: 1px solid rgba(0,255,163,0.3); color: #00ffa3; }
+.price-sol:hover { background: rgba(0,255,163,0.2); }
+.price-sol-only { background: linear-gradient(135deg, rgba(0,255,163,0.15), rgba(3,225,255,0.15)); border: 1px solid rgba(0,255,163,0.4); color: #00ffa3; width: 100%; }
+</style>
+</head>
+<body>
+
+<div style="background:var(--bg-dark);min-height:100vh;">
+  <nav class="top-nav">
+    <div class="nav-brand"><span style="font-size:1.5rem;">🎮</span><span class="brand-text">CamWOW Arena</span></div>
+    <div class="nav-links">
+      <button class="nav-link">Collection</button>
+      <button class="nav-link">Race</button>
+      <button class="nav-link">Battle</button>
+      <button class="nav-link">Leaderboard</button>
+      <button class="nav-link active">Shop</button>
+    </div>
+    <div class="auth-bar">
+      <div class="nav-coins"><span>🪙</span><span class="coin-amount">1,250</span></div>
+      <span class="auth-name">👤 camdizzle</span>
+      <button class="btn btn-danger btn-sm">Logout</button>
+    </div>
+  </nav>
+
+  <div class="main-content">
+    <div class="page-header">
+      <h1>🛒 Buff Shop</h1>
+      <p class="subtitle">Buy race buffs with coins or SOL — premium buffs are SOL-only</p>
+    </div>
+
+    <!-- Balances -->
+    <div class="balance-bar">
+      <div class="balance-card">
+        <span>🪙</span>
+        <span class="balance-label">Coins:</span>
+        <span class="balance-value balance-coins">1,250</span>
+      </div>
+      <div class="balance-card">
+        <span>◎</span>
+        <span class="balance-label">SOL:</span>
+        <span class="balance-value balance-sol">2.45</span>
+      </div>
+    </div>
+
+    <!-- Inventory -->
+    <div class="inventory">
+      <h3>Your Inventory</h3>
+      <div class="inventory-grid">
+        <div class="inv-item">🚀 Nitro Boost <span class="inv-count">x3</span></div>
+        <div class="inv-item">🍀 Lucky Penny <span class="inv-count">x5</span></div>
+        <div class="inv-item">🛡️ Shield Wall <span class="inv-count">x1</span></div>
+        <div class="inv-item">⚡ Turbo Charger <span class="inv-count">x2</span></div>
+        <div class="inv-item">🥤 Energy Drink <span class="inv-count">x4</span></div>
+        <div class="inv-item" style="border:1px solid rgba(0,255,163,0.3);">🌀 Warp Drive <span class="inv-count" style="color:#00ffa3;">x1</span></div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="shop-tabs">
+      <button class="shop-tab active">All Buffs</button>
+      <button class="shop-tab">Regular</button>
+      <button class="shop-tab sol-only">SOL Only ✦</button>
+    </div>
+
+    <!-- Shop Grid -->
+    <div class="shop-grid">
+      <!-- Regular Buff: Nitro Boost -->
+      <div class="shop-card">
+        <div class="shop-card-header">
+          <span class="shop-card-name">🚀 Nitro Boost</span>
+          <span class="shop-badge badge-regular">Regular</span>
+        </div>
+        <p class="shop-card-desc">Increases your marble's top speed by 15% for the entire race.</p>
+        <div class="shop-card-stat">
+          <span class="stat-effect">+15% Speed</span>
+          <span class="stat-duration">Full race</span>
+        </div>
+        <div class="shop-card-prices">
+          <button class="price-btn price-coins">🪙 100 Coins</button>
+          <button class="price-btn price-sol">◎ 0.01 SOL</button>
+        </div>
+      </div>
+
+      <!-- Regular Buff: Lucky Penny -->
+      <div class="shop-card">
+        <div class="shop-card-header">
+          <span class="shop-card-name">🍀 Lucky Penny</span>
+          <span class="shop-badge badge-regular">Regular</span>
+        </div>
+        <p class="shop-card-desc">Boosts your luck stat by 20%, increasing chance of favorable RNG events.</p>
+        <div class="shop-card-stat">
+          <span class="stat-effect">+20% Luck</span>
+          <span class="stat-duration">Full race</span>
+        </div>
+        <div class="shop-card-prices">
+          <button class="price-btn price-coins">🪙 75 Coins</button>
+          <button class="price-btn price-sol">◎ 0.008 SOL</button>
+        </div>
+      </div>
+
+      <!-- Regular Buff: Shield Wall -->
+      <div class="shop-card">
+        <div class="shop-card-header">
+          <span class="shop-card-name">🛡️ Shield Wall</span>
+          <span class="shop-badge badge-regular">Regular</span>
+        </div>
+        <p class="shop-card-desc">Increases toughness by 25%, reducing the impact of obstacles.</p>
+        <div class="shop-card-stat">
+          <span class="stat-effect">+25% Toughness</span>
+          <span class="stat-duration">Full race</span>
+        </div>
+        <div class="shop-card-prices">
+          <button class="price-btn price-coins">🪙 120 Coins</button>
+          <button class="price-btn price-sol">◎ 0.012 SOL</button>
+        </div>
+      </div>
+
+      <!-- Regular Buff: Turbo Charger -->
+      <div class="shop-card">
+        <div class="shop-card-header">
+          <span class="shop-card-name">⚡ Turbo Charger</span>
+          <span class="shop-badge badge-regular">Regular</span>
+        </div>
+        <p class="shop-card-desc">Massive 30% acceleration boost at race start for first 20% of track.</p>
+        <div class="shop-card-stat">
+          <span class="stat-effect">+30% Acceleration</span>
+          <span class="stat-duration">First 20%</span>
+        </div>
+        <div class="shop-card-prices">
+          <button class="price-btn price-coins">🪙 150 Coins</button>
+          <button class="price-btn price-sol">◎ 0.015 SOL</button>
+        </div>
+      </div>
+
+      <!-- Regular Buff: Energy Drink -->
+      <div class="shop-card">
+        <div class="shop-card-header">
+          <span class="shop-card-name">🥤 Energy Drink</span>
+          <span class="shop-badge badge-regular">Regular</span>
+        </div>
+        <p class="shop-card-desc">Boosts stamina by 20%, keeping your marble going strong in the later half.</p>
+        <div class="shop-card-stat">
+          <span class="stat-effect">+20% Stamina</span>
+          <span class="stat-duration">Full race</span>
+        </div>
+        <div class="shop-card-prices">
+          <button class="price-btn price-coins">🪙 80 Coins</button>
+          <button class="price-btn price-sol">◎ 0.008 SOL</button>
+        </div>
+      </div>
+
+      <!-- PREMIUM: Warp Drive -->
+      <div class="shop-card premium">
+        <div class="shop-card-header">
+          <span class="shop-card-name">🌀 Warp Drive</span>
+          <span class="shop-badge badge-premium">✦ Premium</span>
+        </div>
+        <p class="shop-card-desc">Teleports your marble ahead 10% at a random point during the race. Game-changing ability!</p>
+        <div class="shop-card-stat">
+          <span class="stat-effect">+10% Position Skip</span>
+          <span class="stat-duration">Once per race</span>
+        </div>
+        <div class="shop-card-prices">
+          <button class="price-btn price-sol-only">◎ 0.15 SOL — SOL Only</button>
+        </div>
+      </div>
+
+      <!-- PREMIUM: Gravity Well -->
+      <div class="shop-card premium">
+        <div class="shop-card-header">
+          <span class="shop-card-name">🕳️ Gravity Well</span>
+          <span class="shop-badge badge-premium">✦ Premium</span>
+        </div>
+        <p class="shop-card-desc">Slows nearby competitors by 8% for the last 30% of the race. Devastating in close finishes.</p>
+        <div class="shop-card-stat">
+          <span class="stat-effect">-8% Opponent Speed</span>
+          <span class="stat-duration">Last 30%</span>
+        </div>
+        <div class="shop-card-prices">
+          <button class="price-btn price-sol-only">◎ 0.08 SOL — SOL Only</button>
+        </div>
+      </div>
+
+      <!-- PREMIUM: Mirror Image -->
+      <div class="shop-card premium">
+        <div class="shop-card-header">
+          <span class="shop-card-name">🪞 Mirror Image</span>
+          <span class="shop-badge badge-premium">✦ Premium</span>
+        </div>
+        <p class="shop-card-desc">Copies the highest stat of the leading marble for the last 25% of the race.</p>
+        <div class="shop-card-stat">
+          <span class="stat-effect">Copy leader's best stat</span>
+          <span class="stat-duration">Last 25%</span>
+        </div>
+        <div class="shop-card-prices">
+          <button class="price-btn price-sol-only">◎ 0.07 SOL — SOL Only</button>
+        </div>
+      </div>
+
+      <!-- PREMIUM: Golden Ticket -->
+      <div class="shop-card premium">
+        <div class="shop-card-header">
+          <span class="shop-card-name">🎫 Golden Ticket</span>
+          <span class="shop-badge badge-premium">✦ Premium</span>
+        </div>
+        <p class="shop-card-desc">Doubles coin earnings from this race, win or lose. Stacks with placement bonuses.</p>
+        <div class="shop-card-stat">
+          <span class="stat-effect">2x Coin Earnings</span>
+          <span class="stat-duration">Full race</span>
+        </div>
+        <div class="shop-card-prices">
+          <button class="price-btn price-sol-only">◎ 0.03 SOL — SOL Only</button>
+        </div>
+      </div>
+
+      <!-- PREMIUM: Adrenaline Surge -->
+      <div class="shop-card premium">
+        <div class="shop-card-header">
+          <span class="shop-card-name">💉 Adrenaline Surge</span>
+          <span class="shop-badge badge-premium">✦ Premium</span>
+        </div>
+        <p class="shop-card-desc">All stats boosted by 10% for the entire race. The all-rounder's dream.</p>
+        <div class="shop-card-stat">
+          <span class="stat-effect">+10% All Stats</span>
+          <span class="stat-duration">Full race</span>
+        </div>
+        <div class="shop-card-prices">
+          <button class="price-btn price-sol-only">◎ 0.02 SOL — SOL Only</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

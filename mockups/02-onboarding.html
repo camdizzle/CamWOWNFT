@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CamWOW Arena — Onboarding</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-dark: #0a0a1a; --bg-card: #141428; --bg-surface: #1a1a35;
+  --bg-hover: #222250; --border: #2a2a55; --text: #e0e0f0;
+  --text-muted: #8888aa; --accent: #6c5ce7; --accent-glow: #a29bfe;
+  --success: #55efc4; --danger: #ff6b6b; --warning: #ffeaa7; --gold: #ffd700;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg-dark); color: var(--text); min-height: 100vh;
+}
+.onboarding-overlay {
+  position: relative; min-height: 100vh;
+  background: var(--bg-dark); display: flex;
+  align-items: center; justify-content: center; padding: 1rem;
+}
+.onboarding-card {
+  background: var(--bg-card); border: 2px solid var(--border);
+  border-radius: 16px; padding: 2.5rem; max-width: 500px; width: 100%;
+  box-shadow: 0 0 60px rgba(108,92,231,0.15);
+}
+.onboarding-header { text-align: center; margin-bottom: 2rem; }
+.onboarding-icon { font-size: 3rem; display: block; margin-bottom: 0.75rem; }
+.onboarding-header h2 {
+  font-size: 1.4rem;
+  background: linear-gradient(135deg, var(--accent), var(--success));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  margin-bottom: 0.5rem;
+}
+.onboarding-user { color: var(--text-muted); font-size: 0.9rem; }
+.onboarding-body h3 { font-size: 1.05rem; margin-bottom: 0.5rem; }
+.onboarding-desc { color: var(--text-muted); font-size: 0.85rem; line-height: 1.5; margin-bottom: 0.5rem; }
+.onboarding-note { color: var(--accent-glow); font-size: 0.8rem; margin-bottom: 1rem; }
+.onboarding-error {
+  padding: 0.5rem 0.75rem; background: rgba(255,107,107,0.15);
+  border: 1px solid var(--danger); border-radius: 8px; color: var(--danger);
+  font-size: 0.85rem; margin-bottom: 0.75rem;
+}
+.onboarding-form { display: flex; flex-direction: column; gap: 0.75rem; }
+.onboarding-input {
+  padding: 0.7rem 1rem; background: var(--bg-surface);
+  border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text); font-size: 0.9rem; outline: none;
+  transition: border-color 0.2s; font-family: inherit;
+}
+.onboarding-input:focus { border-color: var(--accent); }
+.onboarding-input::placeholder { color: var(--text-muted); }
+.btn {
+  padding: 0.6rem 1.5rem; border-radius: 8px; border: none;
+  cursor: pointer; font-size: 0.95rem; font-weight: 600;
+  transition: all 0.2s; font-family: inherit;
+}
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: var(--accent-glow); box-shadow: 0 0 20px rgba(108,92,231,0.4); }
+.onboarding-btn { padding: 0.75rem 1rem; font-size: 1rem; border-radius: 8px; }
+.onboarding-footer {
+  text-align: center; color: var(--text-muted); font-size: 0.75rem;
+  margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border);
+}
+.mockup-label {
+  background: var(--accent); color: white; padding: 0.5rem 1rem;
+  border-radius: 8px; font-weight: 700; font-size: 0.85rem;
+  display: inline-block; margin: 1.5rem 0 0 2rem;
+}
+</style>
+</head>
+<body>
+<h2 style="text-align:center;padding:1.5rem;color:var(--accent-glow);font-size:1.5rem;">02 — Onboarding (Wallet Connection)</h2>
+
+<!-- Empty State -->
+<div class="mockup-label">Default State</div>
+<div class="onboarding-overlay">
+  <div class="onboarding-card">
+    <div class="onboarding-header">
+      <span class="onboarding-icon">🎮</span>
+      <h2>Welcome to CamWOW Arena!</h2>
+      <p class="onboarding-user">Logged in as: <strong>camdizzle</strong></p>
+    </div>
+    <div class="onboarding-body">
+      <h3>Connect Your Solana Wallet</h3>
+      <p class="onboarding-desc">
+        Link your Solana wallet to detect your CamWOW NFTs.
+        Your NFT traits become your marble's racing stats.
+      </p>
+      <p class="onboarding-note">Supports any Solana wallet address</p>
+      <form class="onboarding-form" onsubmit="return false">
+        <input class="onboarding-input" type="text" placeholder="Solana wallet address (e.g. 7xKX...4nR2)">
+        <input class="onboarding-input" type="text" placeholder="Label (optional, e.g. Main Wallet)">
+        <button class="btn btn-primary onboarding-btn">Connect Wallet</button>
+      </form>
+    </div>
+    <div class="onboarding-footer">CamWOW Arena | LaunchMyNFT</div>
+  </div>
+</div>
+
+<!-- Error State -->
+<div class="mockup-label">Error State</div>
+<div class="onboarding-overlay">
+  <div class="onboarding-card">
+    <div class="onboarding-header">
+      <span class="onboarding-icon">🎮</span>
+      <h2>Welcome to CamWOW Arena!</h2>
+      <p class="onboarding-user">Logged in as: <strong>camdizzle</strong></p>
+    </div>
+    <div class="onboarding-body">
+      <h3>Connect Your Solana Wallet</h3>
+      <p class="onboarding-desc">
+        Link your Solana wallet to detect your CamWOW NFTs.
+        Your NFT traits become your marble's racing stats.
+      </p>
+      <div class="onboarding-error">This wallet address is already linked to another account.</div>
+      <form class="onboarding-form" onsubmit="return false">
+        <input class="onboarding-input" type="text" value="7xKXzqp...invalid...4nR2" style="border-color: var(--danger);">
+        <input class="onboarding-input" type="text" placeholder="Label (optional)">
+        <button class="btn btn-primary onboarding-btn">Connect Wallet</button>
+      </form>
+    </div>
+    <div class="onboarding-footer">CamWOW Arena | LaunchMyNFT</div>
+  </div>
+</div>
+
+</body>
+</html>

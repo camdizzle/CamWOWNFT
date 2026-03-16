@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CamWOW Arena — Battle</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-dark: #0a0a1a; --bg-card: #141428; --bg-surface: #1a1a35;
+  --bg-hover: #222250; --border: #2a2a55; --text: #e0e0f0;
+  --text-muted: #8888aa; --accent: #6c5ce7; --accent-glow: #a29bfe;
+  --success: #55efc4; --danger: #ff6b6b; --warning: #ffeaa7; --gold: #ffd700;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "Inter", -apple-system, sans-serif; background: var(--bg-dark); color: var(--text); }
+.top-nav { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 2rem; background: var(--bg-surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+.nav-brand { display: flex; align-items: center; gap: 0.5rem; }
+.brand-text { font-size: 1.25rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-glow), #fd79a8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.nav-links { display: flex; gap: 0.25rem; }
+.nav-link { background: none; border: none; color: var(--text-muted); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-family: inherit; }
+.nav-link.active { background: var(--accent); color: white; }
+.auth-bar { display: flex; align-items: center; gap: 0.75rem; }
+.nav-coins { display: flex; align-items: center; gap: 0.3rem; background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3); padding: 0.3rem 0.75rem; border-radius: 20px; font-weight: 700; }
+.coin-amount { color: var(--gold); font-size: 0.9rem; }
+.auth-name { font-weight: 600; font-size: 0.85rem; }
+.btn { padding: 0.6rem 1.5rem; border-radius: 8px; border: none; cursor: pointer; font-size: 0.95rem; font-weight: 600; font-family: inherit; }
+.btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+.btn-primary { background: var(--accent); color: white; }
+.btn-danger { background: var(--danger); color: white; }
+.btn-secondary { background: var(--bg-surface); color: var(--text); border: 1px solid var(--border); }
+.main-content { flex: 1; padding: 2rem; max-width: 1200px; margin: 0 auto; width: 100%; }
+.page-header { margin-bottom: 1.5rem; }
+.page-header h1 { font-size: 1.8rem; margin-bottom: 0.25rem; }
+.subtitle { color: var(--text-muted); font-size: 0.9rem; }
+
+/* Battle Picker */
+.battle-picker { display: grid; grid-template-columns: 1fr auto 1fr; gap: 1.5rem; align-items: start; margin-bottom: 2rem; }
+.picker-side { background: var(--bg-card); border: 2px solid var(--border); border-radius: 16px; padding: 1.5rem; text-align: center; }
+.picker-side.selected { border-color: var(--accent); box-shadow: 0 0 25px rgba(108,92,231,0.2); }
+.picker-label { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.picker-emoji { font-size: 4rem; margin-bottom: 0.5rem; }
+.picker-name { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.25rem; }
+.picker-power { color: var(--gold); font-weight: 700; margin-bottom: 0.75rem; }
+.picker-stats { display: flex; flex-direction: column; gap: 0.3rem; text-align: left; }
+.picker-stat { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; }
+.picker-stat-label { width: 80px; color: var(--text-muted); }
+.picker-stat-bar { flex: 1; height: 6px; background: var(--bg-dark); border-radius: 3px; overflow: hidden; }
+.picker-stat-fill { height: 100%; border-radius: 3px; }
+.picker-stat-val { width: 24px; text-align: right; font-weight: 600; }
+.picker-vs { display: flex; align-items: center; justify-content: center; }
+.vs-badge { font-size: 2rem; font-weight: 900; color: var(--danger); text-shadow: 0 0 20px rgba(255,107,107,0.4); padding-top: 3rem; }
+
+/* NFT Carousel */
+.nft-carousel { display: flex; gap: 0.75rem; justify-content: center; margin-top: 1rem; }
+.nft-thumb { width: 60px; height: 60px; border-radius: 8px; background: var(--bg-surface); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; }
+.nft-thumb.active { border-color: var(--accent); }
+.nft-thumb:hover { border-color: var(--accent-glow); }
+
+/* Battle Arena */
+.battle-arena { background: var(--bg-card); border: 2px solid var(--danger); border-radius: 16px; padding: 2rem; margin-bottom: 2rem; text-align: center; }
+.arena-title { font-size: 1.3rem; font-weight: 900; margin-bottom: 1.5rem; color: var(--danger); }
+.arena-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; align-items: center; margin-bottom: 1.5rem; }
+.arena-fighter { text-align: center; }
+.arena-emoji { font-size: 4rem; margin-bottom: 0.5rem; }
+.arena-name { font-weight: 700; font-size: 1rem; }
+.arena-hp-bar { height: 10px; background: var(--bg-dark); border-radius: 5px; overflow: hidden; margin-top: 0.5rem; }
+.arena-hp-fill { height: 100%; border-radius: 5px; transition: width 0.3s; }
+.arena-hp-text { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; }
+.arena-vs { font-size: 2.5rem; font-weight: 900; color: var(--danger); }
+
+/* Battle Log */
+.battle-log { background: var(--bg-surface); border-radius: 10px; padding: 1rem; max-height: 200px; overflow-y: auto; text-align: left; font-size: 0.8rem; font-family: monospace; }
+.log-entry { padding: 0.2rem 0; border-bottom: 1px solid rgba(42,42,85,0.5); }
+.log-entry:last-child { border: none; }
+.log-damage { color: var(--danger); }
+.log-heal { color: var(--success); }
+.log-crit { color: var(--gold); font-weight: 700; }
+.log-miss { color: var(--text-muted); }
+
+/* Results */
+.battle-result { text-align: center; padding: 2rem; }
+.battle-result-title { font-size: 2rem; font-weight: 900; margin-bottom: 0.5rem; }
+.battle-result-subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; }
+.battle-rewards { display: flex; gap: 1rem; justify-content: center; }
+.reward-item { background: var(--bg-surface); border-radius: 8px; padding: 0.5rem 1rem; font-size: 0.85rem; }
+.reward-value { font-weight: 700; color: var(--gold); }
+
+.section-divider { border: none; border-top: 3px dashed var(--border); margin: 3rem 0; }
+.mockup-label { background: var(--danger); color: white; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 700; font-size: 0.85rem; display: inline-block; margin: 0 0 1.5rem 2rem; }
+</style>
+</head>
+<body>
+
+<h2 style="text-align:center;padding:1.5rem;color:var(--danger);font-size:1.5rem;">06 — Battle Arena</h2>
+
+<!-- STATE 1: PICKER -->
+<div class="mockup-label">NFT Selection</div>
+<div style="background:var(--bg-dark);min-height:100vh;">
+  <nav class="top-nav">
+    <div class="nav-brand"><span style="font-size:1.5rem;">🎮</span><span class="brand-text">CamWOW Arena</span></div>
+    <div class="nav-links">
+      <button class="nav-link">Collection</button>
+      <button class="nav-link">Race</button>
+      <button class="nav-link active">Battle</button>
+      <button class="nav-link">Leaderboard</button>
+      <button class="nav-link">Shop</button>
+    </div>
+    <div class="auth-bar">
+      <div class="nav-coins"><span>🪙</span><span class="coin-amount">1,250</span></div>
+      <span class="auth-name">👤 camdizzle</span>
+      <button class="btn btn-danger btn-sm">Logout</button>
+    </div>
+  </nav>
+
+  <div class="main-content">
+    <div class="page-header">
+      <h1>⚔️ Battle Arena</h1>
+      <p class="subtitle">1v1 PvP combat — select your fighter, then pick an opponent</p>
+    </div>
+
+    <div class="battle-picker">
+      <!-- Your NFT -->
+      <div class="picker-side selected">
+        <div class="picker-label">Your Fighter</div>
+        <div class="picker-emoji">🔥</div>
+        <div class="picker-name">The 420</div>
+        <div class="picker-power">⚡ 76</div>
+        <div class="picker-stats">
+          <div class="picker-stat"><span class="picker-stat-label">Speed</span><div class="picker-stat-bar"><div class="picker-stat-fill" style="width:60%;background:#74b9ff;"></div></div><span class="picker-stat-val">12</span></div>
+          <div class="picker-stat"><span class="picker-stat-label">Toughness</span><div class="picker-stat-bar"><div class="picker-stat-fill" style="width:45%;background:#ff6b6b;"></div></div><span class="picker-stat-val">9</span></div>
+          <div class="picker-stat"><span class="picker-stat-label">Charisma</span><div class="picker-stat-bar"><div class="picker-stat-fill" style="width:90%;background:#a29bfe;"></div></div><span class="picker-stat-val">18</span></div>
+          <div class="picker-stat"><span class="picker-stat-label">Luck</span><div class="picker-stat-bar"><div class="picker-stat-fill" style="width:70%;background:#ffeaa7;"></div></div><span class="picker-stat-val">14</span></div>
+          <div class="picker-stat"><span class="picker-stat-label">Stamina</span><div class="picker-stat-bar"><div class="picker-stat-fill" style="width:40%;background:#55efc4;"></div></div><span class="picker-stat-val">8</span></div>
+          <div class="picker-stat"><span class="picker-stat-label">Agility</span><div class="picker-stat-bar"><div class="picker-stat-fill" style="width:50%;background:#00cec9;"></div></div><span class="picker-stat-val">10</span></div>
+        </div>
+        <div class="nft-carousel">
+          <div class="nft-thumb active">🔥</div>
+          <div class="nft-thumb">✨</div>
+          <div class="nft-thumb">🛡️</div>
+        </div>
+      </div>
+
+      <!-- VS -->
+      <div class="picker-vs"><span class="vs-badge">VS</span></div>
+
+      <!-- Opponent -->
+      <div class="picker-side">
+        <div class="picker-label">Opponent</div>
+        <div class="picker-emoji">⚔️</div>
+        <div class="picker-name">Bronze Brawler</div>
+        <div class="picker-power">⚡ 45</div>
+        <div class="picker-stats">
+          <div class="picker-stat"><span class="picker-stat-label">Speed</span><div class="picker-stat-bar"><div class="picker-stat-fill" style="width:35%;background:#74b9ff;"></div></div><span class="picker-stat-val">7</span></div>
+          <div class="picker-stat"><span class="picker-stat-label">Toughness</span><div class="picker-stat-bar"><div class="picker-stat-fill" style="width:55%;background:#ff6b6b;"></div></div><span class="picker-stat-val">11</span></div>
+          <div class="picker-stat"><span class="picker-stat-label">Charisma</span><div class="picker-stat-bar"><div class="picker-stat-fill" style="width:30%;background:#a29bfe;"></div></div><span class="picker-stat-val">6</span></div>
+          <div class="picker-stat"><span class="picker-stat-label">Luck</span><div class="picker-stat-bar"><div class="picker-stat-fill" style="width:35%;background:#ffeaa7;"></div></div><span class="picker-stat-val">7</span></div>
+          <div class="picker-stat"><span class="picker-stat-label">Stamina</span><div class="picker-stat-bar"><div class="picker-stat-fill" style="width:40%;background:#55efc4;"></div></div><span class="picker-stat-val">8</span></div>
+          <div class="picker-stat"><span class="picker-stat-label">Agility</span><div class="picker-stat-bar"><div class="picker-stat-fill" style="width:30%;background:#00cec9;"></div></div><span class="picker-stat-val">6</span></div>
+        </div>
+        <div style="margin-top:1rem;">
+          <button class="btn btn-primary">⚔️ Start Battle!</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="section-divider">
+
+<!-- STATE 2: BATTLE IN PROGRESS -->
+<div class="mockup-label">Battle In Progress</div>
+<div style="background:var(--bg-dark);">
+  <div class="main-content">
+    <div class="battle-arena">
+      <div class="arena-title">⚔️ BATTLE IN PROGRESS — Round 4/10</div>
+      <div class="arena-grid">
+        <div class="arena-fighter">
+          <div class="arena-emoji">🔥</div>
+          <div class="arena-name">The 420</div>
+          <div class="arena-hp-bar"><div class="arena-hp-fill" style="width:72%;background:linear-gradient(90deg,var(--success),#00b894);"></div></div>
+          <div class="arena-hp-text">72 / 100 HP</div>
+        </div>
+        <div class="arena-vs">⚔️</div>
+        <div class="arena-fighter">
+          <div class="arena-emoji">⚔️</div>
+          <div class="arena-name">Bronze Brawler</div>
+          <div class="arena-hp-bar"><div class="arena-hp-fill" style="width:38%;background:linear-gradient(90deg,var(--danger),#e84393);"></div></div>
+          <div class="arena-hp-text">38 / 100 HP</div>
+        </div>
+      </div>
+
+      <div class="battle-log">
+        <div class="log-entry"><span class="log-crit">CRIT!</span> The 420 lands a devastating blow for <span class="log-damage">-18 dmg</span></div>
+        <div class="log-entry">Bronze Brawler attacks The 420 for <span class="log-damage">-12 dmg</span></div>
+        <div class="log-entry">The 420 attacks Bronze Brawler for <span class="log-damage">-14 dmg</span></div>
+        <div class="log-entry">Bronze Brawler <span class="log-miss">misses!</span> (Agility dodge)</div>
+        <div class="log-entry">The 420 attacks Bronze Brawler for <span class="log-damage">-11 dmg</span></div>
+        <div class="log-entry">Bronze Brawler attacks The 420 for <span class="log-damage">-9 dmg</span></div>
+        <div class="log-entry"><span class="log-heal">+5 HP</span> The 420 regenerates (Stamina)</div>
+        <div class="log-entry">Bronze Brawler attacks The 420 for <span class="log-damage">-12 dmg</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="section-divider">
+
+<!-- STATE 3: BATTLE RESULT -->
+<div class="mockup-label">Battle Result</div>
+<div style="background:var(--bg-dark);padding-bottom:3rem;">
+  <div class="main-content">
+    <div class="battle-result">
+      <div class="battle-result-title" style="color:var(--gold);">🎉 VICTORY!</div>
+      <div class="battle-result-subtitle">The 420 defeated Bronze Brawler in 7 rounds</div>
+      <div class="battle-rewards">
+        <div class="reward-item">🪙 <span class="reward-value">+50 coins</span></div>
+        <div class="reward-item">⭐ <span class="reward-value">+30 XP</span></div>
+        <div class="reward-item">🏆 <span class="reward-value">+25 pts</span></div>
+      </div>
+      <div style="margin-top:1.5rem;">
+        <button class="btn btn-primary">Battle Again</button>
+        <button class="btn btn-secondary" style="margin-left:0.5rem;">Back to Collection</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

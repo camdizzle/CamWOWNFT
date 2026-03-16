@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CamWOW Arena — Premium Race</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-dark: #0a0a1a; --bg-card: #141428; --bg-surface: #1a1a35;
+  --bg-hover: #222250; --border: #2a2a55; --text: #e0e0f0;
+  --text-muted: #8888aa; --accent: #6c5ce7; --accent-glow: #a29bfe;
+  --success: #55efc4; --danger: #ff6b6b; --warning: #ffeaa7; --gold: #ffd700;
+  --silver: #c0c0c0; --bronze: #cd7f32;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "Inter", -apple-system, sans-serif; background: var(--bg-dark); color: var(--text); }
+.top-nav { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 2rem; background: var(--bg-surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+.nav-brand { display: flex; align-items: center; gap: 0.5rem; }
+.brand-text { font-size: 1.25rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-glow), #fd79a8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.nav-links { display: flex; gap: 0.25rem; }
+.nav-link { background: none; border: none; color: var(--text-muted); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-family: inherit; }
+.nav-link.active { background: var(--accent); color: white; }
+.auth-bar { display: flex; align-items: center; gap: 0.75rem; }
+.nav-coins { display: flex; align-items: center; gap: 0.3rem; background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3); padding: 0.3rem 0.75rem; border-radius: 20px; font-weight: 700; }
+.coin-amount { color: var(--gold); font-size: 0.9rem; }
+.auth-name { font-weight: 600; font-size: 0.85rem; }
+.btn { padding: 0.6rem 1.5rem; border-radius: 8px; border: none; cursor: pointer; font-size: 0.95rem; font-weight: 600; font-family: inherit; }
+.btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+.btn-primary { background: var(--accent); color: white; }
+.btn-danger { background: var(--danger); color: white; }
+.btn-secondary { background: var(--bg-surface); color: var(--text); border: 1px solid var(--border); }
+.main-content { flex: 1; padding: 2rem; max-width: 1200px; margin: 0 auto; width: 100%; }
+.page-header { margin-bottom: 1.5rem; }
+.page-header h1 { font-size: 1.8rem; margin-bottom: 0.25rem; }
+.subtitle { color: var(--text-muted); font-size: 0.9rem; }
+
+/* Mode Toggle */
+.mode-toggle { display: flex; margin-bottom: 1.5rem; background: var(--bg-card); border-radius: 10px; border: 1px solid var(--border); overflow: hidden; width: fit-content; }
+.mode-btn { padding: 0.6rem 1.5rem; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.9rem; font-family: inherit; font-weight: 600; }
+.mode-btn.active { background: var(--gold); color: #0a0a1a; }
+
+/* Premium Banner */
+.premium-banner { background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(108,92,231,0.1)); border: 1px solid rgba(255,215,0,0.3); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.25rem; }
+.premium-banner-title { font-weight: 700; color: var(--gold); margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.5rem; }
+.premium-banner-details { display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.85rem; color: var(--text-muted); }
+.premium-detail-value { color: var(--gold); font-weight: 700; }
+
+/* Status */
+.status-bar { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1.25rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 1rem; flex-wrap: wrap; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+.status-label { font-weight: 700; font-size: 0.85rem; }
+.status-timer { color: var(--text-muted); font-size: 0.85rem; }
+
+/* Season Gauge */
+.season-gauge { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.25rem; }
+.season-gauge-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.season-gauge-title { font-weight: 700; font-size: 0.95rem; }
+.season-gauge-desc { color: var(--text-muted); font-size: 0.75rem; }
+.gauge-track { height: 12px; background: var(--bg-dark); border-radius: 6px; overflow: hidden; margin-bottom: 0.4rem; }
+.gauge-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--accent), var(--gold)); }
+.gauge-amount { text-align: center; font-size: 1.1rem; font-weight: 900; color: var(--gold); margin-bottom: 0.25rem; }
+.gauge-meta { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 0.75rem; }
+
+/* Live Prize Pool */
+.live-prize { background: var(--bg-card); border: 2px solid var(--gold); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.25rem; text-align: center; }
+.live-prize h4 { color: var(--gold); font-size: 1rem; margin-bottom: 0.75rem; }
+.prize-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
+.prize-slot { background: var(--bg-surface); border-radius: 8px; padding: 0.5rem; }
+.prize-place { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.15rem; }
+.prize-amount { font-weight: 900; font-size: 1rem; }
+.prize-pct { font-size: 0.7rem; color: var(--text-muted); }
+
+/* Rules */
+.rules-bar { display: flex; gap: 1rem; padding: 0.6rem 1rem; background: rgba(255,215,0,0.05); border: 1px solid rgba(255,215,0,0.15); border-radius: 8px; margin-bottom: 1.25rem; flex-wrap: wrap; font-size: 0.8rem; color: var(--text-muted); }
+
+/* Entries */
+.entries-section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.25rem; }
+.entries-header { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.75rem; }
+.entry-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.75rem; background: var(--bg-surface); border-radius: 8px; margin-bottom: 0.4rem; }
+.entry-row.mine { border-left: 3px solid var(--gold); }
+.entry-name { font-weight: 600; font-size: 0.9rem; flex: 1; }
+.entry-power { color: var(--gold); font-size: 0.8rem; font-weight: 600; }
+.entry-fee { color: var(--warning); font-size: 0.75rem; font-weight: 600; }
+.buff-tag { background: rgba(108,92,231,0.2); color: var(--accent-glow); padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600; }
+
+/* Results */
+.results-card { background: var(--bg-card); border: 2px solid var(--gold); border-radius: 16px; padding: 1.5rem; }
+.results-card h3 { font-size: 1.2rem; margin-bottom: 0.5rem; text-align: center; color: var(--gold); }
+.results-subtitle { text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem; }
+.result-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.75rem; border-radius: 8px; margin-bottom: 0.3rem; font-size: 0.9rem; }
+.result-row:nth-child(2) { background: rgba(255,215,0,0.12); }
+.result-row:nth-child(3) { background: rgba(192,192,192,0.08); }
+.result-row:nth-child(4) { background: rgba(205,127,50,0.08); }
+.result-pos { width: 30px; font-weight: 900; }
+.result-name { flex: 1; font-weight: 600; }
+.result-time { color: var(--text-muted); font-size: 0.85rem; width: 60px; text-align: right; }
+.result-pts { font-weight: 700; color: var(--success); width: 70px; text-align: right; }
+.result-pbp { font-weight: 900; color: var(--gold); width: 90px; text-align: right; }
+.result-mine { border-left: 3px solid var(--gold); }
+
+.section-divider { border: none; border-top: 3px dashed var(--border); margin: 3rem 0; }
+.mockup-label { background: var(--gold); color: #0a0a1a; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 700; font-size: 0.85rem; display: inline-block; margin: 0 0 1.5rem 2rem; }
+</style>
+</head>
+<body>
+
+<h2 style="text-align:center;padding:1.5rem;color:var(--gold);font-size:1.5rem;">05 — Premium Race Mode</h2>
+
+<!-- STATE 1: PREMIUM LOBBY -->
+<div class="mockup-label">Premium Lobby</div>
+<div style="background:var(--bg-dark);min-height:100vh;">
+  <nav class="top-nav">
+    <div class="nav-brand"><span style="font-size:1.5rem;">🎮</span><span class="brand-text">CamWOW Arena</span></div>
+    <div class="nav-links">
+      <button class="nav-link">Collection</button>
+      <button class="nav-link active">Race</button>
+      <button class="nav-link">Battle</button>
+      <button class="nav-link">Leaderboard</button>
+      <button class="nav-link">Shop</button>
+    </div>
+    <div class="auth-bar">
+      <div class="nav-coins"><span>🪙</span><span class="coin-amount">1,250</span></div>
+      <span class="auth-name">👤 camdizzle</span>
+      <button class="btn btn-danger btn-sm">Logout</button>
+    </div>
+  </nav>
+
+  <div class="main-content">
+    <div class="page-header">
+      <h1>🏁 Marble Racing League</h1>
+      <p class="subtitle">Free races earn coins | Premium races cost 50 PBP with prize pool payouts</p>
+    </div>
+
+    <div class="mode-toggle">
+      <button class="mode-btn">Free Race</button>
+      <button class="mode-btn active">Premium Race (50 PBP)</button>
+    </div>
+
+    <!-- Premium Info Banner -->
+    <div class="premium-banner">
+      <div class="premium-banner-title">💰 Premium Race — 50 PBP Entry Fee Per NFT</div>
+      <div class="premium-banner-details">
+        <span>🥇 1st: <span class="premium-detail-value">40%</span> of pool</span>
+        <span>🥈 2nd: <span class="premium-detail-value">15%</span></span>
+        <span>🥉 3rd: <span class="premium-detail-value">10%</span></span>
+        <span>🏆 Season Pool: <span class="premium-detail-value">35%</span></span>
+      </div>
+    </div>
+
+    <div class="status-bar">
+      <span class="status-dot"></span>
+      <span class="status-label">Waiting for Racers</span>
+      <span class="status-timer">2 / 6 min</span>
+    </div>
+
+    <!-- Live Prize Pool -->
+    <div class="live-prize">
+      <h4>💰 Live Prize Pool — 400 PBP (8 entries × 50 PBP)</h4>
+      <div class="prize-grid">
+        <div class="prize-slot">
+          <div class="prize-place">🥇 1st Place</div>
+          <div class="prize-amount" style="color:var(--gold);">160 PBP</div>
+          <div class="prize-pct">40%</div>
+        </div>
+        <div class="prize-slot">
+          <div class="prize-place">🥈 2nd Place</div>
+          <div class="prize-amount" style="color:var(--silver);">60 PBP</div>
+          <div class="prize-pct">15%</div>
+        </div>
+        <div class="prize-slot">
+          <div class="prize-place">🥉 3rd Place</div>
+          <div class="prize-amount" style="color:var(--bronze);">40 PBP</div>
+          <div class="prize-pct">10%</div>
+        </div>
+        <div class="prize-slot">
+          <div class="prize-place">🏆 Season Pool</div>
+          <div class="prize-amount" style="color:var(--accent-glow);">140 PBP</div>
+          <div class="prize-pct">35%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Season Gauge -->
+    <div class="season-gauge">
+      <div class="season-gauge-header">
+        <span class="season-gauge-title">🏆 Season Prize Pool</span>
+        <span class="season-gauge-desc">End-of-season PBP token prizes</span>
+      </div>
+      <div class="gauge-track"><div class="gauge-fill" style="width:52%;"></div></div>
+      <div class="gauge-amount">2,590 PBP</div>
+      <div class="gauge-meta">
+        <span>15 premium races contributed</span>
+        <span>Treasury: HtPe6E...oN5</span>
+      </div>
+    </div>
+
+    <div class="rules-bar">
+      <span>💰 50 PBP per entry</span>
+      <span>|</span>
+      <span>Max 2 NFTs per user</span>
+      <span>|</span>
+      <span>Min 6 racers to start</span>
+      <span>|</span>
+      <span>Your entries: 1/2</span>
+    </div>
+
+    <!-- Entered -->
+    <div class="entries-section">
+      <div class="entries-header">Entered (8)</div>
+      <div class="entry-row mine">
+        <span class="entry-name">The 420</span>
+        <span class="entry-power">⚡ 76</span>
+        <span class="entry-fee">-50 PBP</span>
+        <span class="buff-tag">Warp Drive</span>
+        <button class="btn btn-sm btn-danger">Withdraw (+50 PBP refund)</button>
+      </div>
+      <div class="entry-row"><span class="entry-name">Golden Sage</span><span class="entry-power">⚡ 66</span><span class="entry-fee">-50 PBP</span></div>
+      <div class="entry-row"><span class="entry-name">Silver Sentinel</span><span class="entry-power">⚡ 57</span><span class="entry-fee">-50 PBP</span></div>
+      <div class="entry-row"><span class="entry-name">Bronze Brawler</span><span class="entry-power">⚡ 45</span><span class="entry-fee">-50 PBP</span></div>
+      <div class="entry-row"><span class="entry-name">Neon Viper</span><span class="entry-power">⚡ 62</span><span class="entry-fee">-50 PBP</span></div>
+      <div class="entry-row"><span class="entry-name">Cosmic Rider</span><span class="entry-power">⚡ 58</span><span class="entry-fee">-50 PBP</span></div>
+      <div class="entry-row"><span class="entry-name">Shadow Runner</span><span class="entry-power">⚡ 51</span><span class="entry-fee">-50 PBP</span></div>
+      <div class="entry-row"><span class="entry-name">Crystal Knight</span><span class="entry-power">⚡ 48</span><span class="entry-fee">-50 PBP</span></div>
+    </div>
+  </div>
+</div>
+
+<hr class="section-divider">
+
+<!-- STATE 2: PREMIUM RESULTS -->
+<div class="mockup-label">Premium Race Results</div>
+<div style="background:var(--bg-dark);padding-bottom:3rem;">
+  <div class="main-content">
+    <div class="results-card">
+      <h3>🏆 Premium Race Results</h3>
+      <p class="results-subtitle">Prize Pool: 400 PBP (8 entries × 50 PBP)</p>
+      <div class="result-row result-mine">
+        <span class="result-pos" style="color:var(--gold);">🥇</span>
+        <span class="result-name">The 420</span>
+        <span class="result-time">11.8s</span>
+        <span class="result-pts">+100 pts</span>
+        <span class="result-pbp">+160 PBP</span>
+      </div>
+      <div class="result-row">
+        <span class="result-pos" style="color:var(--silver);">🥈</span>
+        <span class="result-name">Neon Viper</span>
+        <span class="result-time">12.4s</span>
+        <span class="result-pts">+70 pts</span>
+        <span class="result-pbp">+60 PBP</span>
+      </div>
+      <div class="result-row">
+        <span class="result-pos" style="color:var(--bronze);">🥉</span>
+        <span class="result-name">Golden Sage</span>
+        <span class="result-time">12.9s</span>
+        <span class="result-pts">+50 pts</span>
+        <span class="result-pbp">+40 PBP</span>
+      </div>
+      <div class="result-row">
+        <span class="result-pos">#4</span>
+        <span class="result-name">Silver Sentinel</span>
+        <span class="result-time">13.3s</span>
+        <span class="result-pts">+35 pts</span>
+        <span class="result-pbp" style="color:var(--text-muted);">—</span>
+      </div>
+      <div class="result-row">
+        <span class="result-pos">#5</span>
+        <span class="result-name">Cosmic Rider</span>
+        <span class="result-time">13.8s</span>
+        <span class="result-pts">+25 pts</span>
+        <span class="result-pbp" style="color:var(--text-muted);">—</span>
+      </div>
+      <div class="result-row">
+        <span class="result-pos">#6</span>
+        <span class="result-name">Bronze Brawler</span>
+        <span class="result-time">14.1s</span>
+        <span class="result-pts">+15 pts</span>
+        <span class="result-pbp" style="color:var(--text-muted);">—</span>
+      </div>
+      <div class="result-row">
+        <span class="result-pos">#7</span>
+        <span class="result-name">Shadow Runner</span>
+        <span class="result-time">14.6s</span>
+        <span class="result-pts">+10 pts</span>
+        <span class="result-pbp" style="color:var(--text-muted);">—</span>
+      </div>
+      <div class="result-row">
+        <span class="result-pos">#8</span>
+        <span class="result-name">Crystal Knight</span>
+        <span class="result-time">15.2s</span>
+        <span class="result-pts">+5 pts</span>
+        <span class="result-pbp" style="color:var(--text-muted);">—</span>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:1rem;">
+      <p style="color:var(--accent-glow);font-size:0.9rem;font-weight:600;">140 PBP added to Season Prize Pool</p>
+      <p style="color:var(--text-muted);font-size:0.8rem;margin-top:0.25rem;">Auto-resets to lobby in 10 seconds</p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
