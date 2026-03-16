@@ -43,15 +43,17 @@ function seededRandom(seed: number): () => number {
 }
 
 // ── Soft cap: diminishing returns above SOFT_CAP_KNEE ─────────────────
-// Below the knee, stats scale 1:1.  Above it, returns follow sqrt curve.
-// Examples (knee=10): 5→5, 10→10, 15→13.4, 20→14.7, 32→17.0
+// Below the knee, stats scale 1:1.  Above it, returns follow sqrt curve
+// with a 1.0 multiplier — aggressive flattening so legendaries only get
+// a ~10% edge in races rather than dominating.
+// Examples (knee=6): 5→5, 6→6, 7→7, 10→8, 13→8.6, 21→9.9
 
-const SOFT_CAP_KNEE = 10;
+const SOFT_CAP_KNEE = 6;
 
 function softCap(raw: number): number {
   if (raw <= SOFT_CAP_KNEE) return raw;
   const excess = raw - SOFT_CAP_KNEE;
-  return SOFT_CAP_KNEE + Math.sqrt(excess) * 1.5;
+  return SOFT_CAP_KNEE + Math.sqrt(excess);
 }
 
 // ── Buff-aware movement calculation ────────────────────────────────────
@@ -136,7 +138,7 @@ function calculateMove(ctx: TickContext): number {
   }
 
   // ── Agility: shortcut chance ─────────────────────────────────────
-  let agilityChance = agility * 0.008 * tm("agility");
+  let agilityChance = agility * 0.005 * tm("agility");
   if (hasBuffs("clone_sprint")) agilityChance *= 3;
 
   if (rand() < agilityChance) move += 1.5;
@@ -145,7 +147,7 @@ function calculateMove(ctx: TickContext): number {
   let luckStat = luck;
   if (hasBuffs("double_luck") || hasBuffs("lucky_penny")) luckStat *= 2;
 
-  if (rand() < luckStat * 0.006 * tm("luck")) move += 2.0;
+  if (rand() < luckStat * 0.004 * tm("luck")) move += 2.0;
 
   // ── Collision / Toughness ────────────────────────────────────────
   const ghostActive = hasBuffs("ghost_mode") && entry.position < RACE_DISTANCE * 0.40;
@@ -171,7 +173,7 @@ function calculateMove(ctx: TickContext): number {
 
   // ── Charisma: crowd boost ────────────────────────────────────────
   const crowdThreshold = RACE_DISTANCE * (hasBuffs("crowd_frenzy") ? 0.40 : 0.70);
-  if (entry.position > crowdThreshold && rand() < charisma * 0.005 * tm("charisma")) {
+  if (entry.position > crowdThreshold && rand() < charisma * 0.003 * tm("charisma")) {
     move += 1.0;
   }
 

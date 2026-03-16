@@ -17,7 +17,7 @@ function buildCharacter(
 
 export const SAMPLE_COLLECTION: NFTCharacter[] = [
   // ── ★ Legend — The 420 (1-of-1, all 11 slots filled) ──────────────
-  // 7 S-tier + 4 lower-tier traits.  Power target: ~76
+  // 7 S-tier + 4 lower-tier traits.  Power target: ~58
   buildCharacter("cam-420", "CamWOW #420 — The 420", "/nfts/420.png", [
     { trait_type: "Skin", value: "Solid Gold" },
     { trait_type: "Eyes", value: "Cyborg Eyes" },
@@ -33,7 +33,7 @@ export const SAMPLE_COLLECTION: NFTCharacter[] = [
   ]),
 
   // ── ◆ Gold — Golden Sage (10/11 slots) ────────────────────────────
-  // Strong charisma / luck build.  Power target: ~67
+  // Strong charisma / luck build.  Power target: ~50
   buildCharacter("cam-005", "CamWOW #005 — Golden Sage", "/nfts/005.png", [
     { trait_type: "Skin", value: "Diamond" },
     { trait_type: "Eyes", value: "Sunglasses" },
@@ -48,7 +48,7 @@ export const SAMPLE_COLLECTION: NFTCharacter[] = [
   ]),
 
   // ── ◇ Silver — Silver Sentinel (9/11 slots) ───────────────────────
-  // Balanced tank build.  Power target: ~56
+  // Balanced tank build.  Power target: ~44
   buildCharacter("cam-012", "CamWOW #012 — Silver Sentinel", "/nfts/012.png", [
     { trait_type: "Skin", value: "Obsidian" },
     { trait_type: "Eyes", value: "Laser Eyes" },
@@ -62,7 +62,7 @@ export const SAMPLE_COLLECTION: NFTCharacter[] = [
   ]),
 
   // ── ● Bronze — Bronze Brawler (9/11 slots) ────────────────────────
-  // Stamina / toughness focused.  Power target: ~48
+  // Stamina / toughness focused.  Power target: ~40
   buildCharacter("cam-008", "CamWOW #008 — Bronze Brawler", "/nfts/008.png", [
     { trait_type: "Skin", value: "Bronze" },
     { trait_type: "Eyes", value: "Wide Eyes" },
@@ -76,7 +76,7 @@ export const SAMPLE_COLLECTION: NFTCharacter[] = [
   ]),
 
   // ── ○ Common — Everyday Cam (6/11 slots) ──────────────────────────
-  // Minimal traits, base-heavy stats.  Power target: ~37
+  // Minimal traits, base-heavy stats.  Power target: ~36
   buildCharacter("cam-100", "CamWOW #100 — Everyday Cam", "/nfts/100.png", [
     { trait_type: "Skin", value: "OG" },
     { trait_type: "Eyes", value: "Squint" },
