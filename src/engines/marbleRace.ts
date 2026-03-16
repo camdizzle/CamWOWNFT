@@ -10,7 +10,7 @@ import type { ActiveBuff } from "./buffs";
 //   toughness → recover from collisions
 //   charisma  → crowd boost (small random bonus)
 
-const RACE_DISTANCE = 100; // finish line
+export const RACE_DISTANCE = 2500; // finish line (~5 min at 100ms ticks)
 const TICK_INTERVAL_MS = 100;
 const POINTS_BY_PLACE = [100, 70, 50, 35, 25, 15, 10, 5];
 
@@ -65,6 +65,36 @@ interface TickContext {
   currentTick: number;
 }
 
+// ── Terrain Zones ─────────────────────────────────────────────────────
+// Each zone spans 20% of the track and amplifies one stat family.
+// The active zone stat gets a 2.0× bonus; other proc-based stats are
+// dampened to 0.3× so the favoured stat genuinely swings the race.
+
+interface TerrainZone {
+  name: string;
+  start: number;       // fraction 0-1
+  end: number;
+  boost: string;       // stat key that gets amplified
+}
+
+const TERRAIN_ZONES: TerrainZone[] = [
+  { name: "Sprint Start",       start: 0.00, end: 0.20, boost: "speed" },
+  { name: "Obstacle Course",    start: 0.20, end: 0.40, boost: "agility" },
+  { name: "Endurance Stretch",  start: 0.40, end: 0.60, boost: "stamina" },
+  { name: "Lucky Gauntlet",     start: 0.60, end: 0.80, boost: "luck" },
+  { name: "Final Stretch",      start: 0.80, end: 1.00, boost: "charisma" },
+];
+
+function getTerrainMultiplier(position: number, stat: string): number {
+  const pct = position / RACE_DISTANCE;
+  for (const zone of TERRAIN_ZONES) {
+    if (pct >= zone.start && pct < zone.end) {
+      return stat === zone.boost ? 2.0 : 0.3;
+    }
+  }
+  return 1.0; // at finish line
+}
+
 function calculateMove(ctx: TickContext): number {
   const { rand, entry, char, buffs, allEntries, currentTick } = ctx;
 
@@ -76,22 +106,28 @@ function calculateMove(ctx: TickContext): number {
   const toughness = softCap(char.stats.toughness);
   const charisma = softCap(char.stats.charisma);
 
+  // Terrain zone multipliers — active zone stat is amplified
+  const tm = (stat: string) => getTerrainMultiplier(entry.position, stat);
+
   const hasBuffs = (id: string) => buffs.some((b) => b.buffId === id);
 
   // ── Base speed ───────────────────────────────────────────────────
+  // High floor (0.6) + small stat bonus (0.3) = stats matter through
+  // procs & terrain, not raw per-tick domination over long races.
   let effectiveSpeed = speed;
   if (hasBuffs("turbo_charger")) effectiveSpeed *= 1.15;
 
-  let move = 0.3 + (effectiveSpeed / 30) * 1.2;
+  const speedBonus = (effectiveSpeed / 30) * 0.3 * tm("speed");
+  let move = 0.6 + speedBonus;
 
   // ── Head Start (applied on tick 1) ───────────────────────────────
   if (currentTick === 1 && hasBuffs("head_start")) {
-    entry.position = 5;
+    entry.position = RACE_DISTANCE * 0.05;
   }
 
   // ── Stamina / Fatigue ────────────────────────────────────────────
-  let fatiguePoint = 60 + stamina * 0.8;
-  if (hasBuffs("energy_drink")) fatiguePoint += 15; // delayed fatigue
+  let fatiguePoint = RACE_DISTANCE * (0.60 + stamina * 0.008 * tm("stamina"));
+  if (hasBuffs("energy_drink")) fatiguePoint += RACE_DISTANCE * 0.15; // delayed fatigue
 
   if (entry.position > fatiguePoint) {
     const fatigueFactor = 1 - ((entry.position - fatiguePoint) / (RACE_DISTANCE - fatiguePoint)) * 0.4;
@@ -99,7 +135,7 @@ function calculateMove(ctx: TickContext): number {
   }
 
   // ── Agility: shortcut chance ─────────────────────────────────────
-  let agilityChance = agility * 0.008;
+  let agilityChance = agility * 0.008 * tm("agility");
   if (hasBuffs("clone_sprint")) agilityChance *= 3;
 
   if (rand() < agilityChance) move += 1.5;
@@ -108,34 +144,34 @@ function calculateMove(ctx: TickContext): number {
   let luckStat = luck;
   if (hasBuffs("double_luck") || hasBuffs("lucky_penny")) luckStat *= 2;
 
-  if (rand() < luckStat * 0.006) move += 2.0;
+  if (rand() < luckStat * 0.006 * tm("luck")) move += 2.0;
 
   // ── Collision / Toughness ────────────────────────────────────────
-  const ghostActive = hasBuffs("ghost_mode") && entry.position < 40;
+  const ghostActive = hasBuffs("ghost_mode") && entry.position < RACE_DISTANCE * 0.40;
   const shieldActive = hasBuffs("shield_wall");
 
   if (rand() < 0.08 && !ghostActive && !shieldActive) {
-    let penalty = Math.max(0.1, 1.2 - toughness * 0.06);
+    let penalty = Math.max(0.1, 1.2 - toughness * 0.06 * tm("toughness"));
     if (hasBuffs("rubber_bumpers")) penalty *= 0.25;
     move -= penalty;
   }
 
   // ── Charisma: crowd boost ────────────────────────────────────────
-  const crowdThreshold = hasBuffs("crowd_frenzy") ? 40 : 70;
-  if (entry.position > crowdThreshold && rand() < charisma * 0.005) {
+  const crowdThreshold = RACE_DISTANCE * (hasBuffs("crowd_frenzy") ? 0.40 : 0.70);
+  if (entry.position > crowdThreshold && rand() < charisma * 0.005 * tm("charisma")) {
     move += 1.0;
   }
 
   // ── Nitro Boost (one-time, random trigger between 20-80%) ────────
   const nitroBuff = buffs.find((b) => b.buffId === "nitro_boost" && !b.triggered);
-  if (nitroBuff && entry.position >= 20 && entry.position <= 80 && rand() < 0.06) {
+  if (nitroBuff && entry.position >= RACE_DISTANCE * 0.20 && entry.position <= RACE_DISTANCE * 0.80 && rand() < 0.06) {
     move *= 1.3;
     nitroBuff.triggered = true;
     nitroBuff.triggerTick = currentTick;
   }
 
   // ── Slipstream (final 20%, if 2nd-4th) ───────────────────────────
-  if (hasBuffs("slipstream") && entry.position > 80) {
+  if (hasBuffs("slipstream") && entry.position > RACE_DISTANCE * 0.80) {
     const sorted = [...allEntries]
       .filter((e) => e.finishTime == null)
       .sort((a, b) => b.position - a.position);
@@ -151,8 +187,9 @@ function calculateMove(ctx: TickContext): number {
     .sort((a, b) => b.position - a.position);
   const leaderPos = sorted[0]?.position ?? 0;
   const gap = leaderPos - entry.position;
-  if (gap > 5) {
-    move += Math.min(0.35, (gap - 5) * 0.03);
+  const rubberBandThreshold = RACE_DISTANCE * 0.02;
+  if (gap > rubberBandThreshold) {
+    move += Math.min(0.35, (gap - rubberBandThreshold) * 0.005);
   }
 
   // ── Random variance ──────────────────────────────────────────────
@@ -181,14 +218,14 @@ function processGlobalBuffs(
   const bananaPeels = allBuffs.filter((b) => b.buffId === "banana_peel" && !b.triggered);
   for (const bp of bananaPeels) {
     const owner = allEntries.find((e) => e.characterId === bp.characterId);
-    if (owner && owner.position > 30 && owner.position < 70 && rand() < 0.04) {
+    if (owner && owner.position > RACE_DISTANCE * 0.30 && owner.position < RACE_DISTANCE * 0.70 && rand() < 0.04) {
       // Slow a random OTHER racer
       const others = allEntries.filter(
         (e) => e.characterId !== bp.characterId && e.finishTime == null
       );
       if (others.length > 0) {
         const victim = others[Math.floor(rand() * others.length)];
-        victim.position = Math.max(0, victim.position - 3);
+        victim.position = Math.max(0, victim.position - RACE_DISTANCE * 0.03);
         bp.triggered = true;
       }
     }
@@ -198,10 +235,10 @@ function processGlobalBuffs(
   const earthquakes = allBuffs.filter((b) => b.buffId === "earthquake" && !b.triggered);
   for (const eq of earthquakes) {
     const owner = allEntries.find((e) => e.characterId === eq.characterId);
-    if (owner && owner.position >= 48 && owner.position <= 52) {
+    if (owner && owner.position >= RACE_DISTANCE * 0.48 && owner.position <= RACE_DISTANCE * 0.52) {
       for (const entry of allEntries) {
         if (entry.finishTime == null) {
-          const penalty = 2 + rand() * 4; // 2-6 position penalty
+          const penalty = RACE_DISTANCE * (0.02 + rand() * 0.04); // 2-6% position penalty
           entry.position = Math.max(0, entry.position - penalty);
         }
       }
@@ -213,7 +250,7 @@ function processGlobalBuffs(
   const timeWarps = allBuffs.filter((b) => b.buffId === "time_warp" && !b.triggered);
   for (const tw of timeWarps) {
     const owner = allEntries.find((e) => e.characterId === tw.characterId);
-    if (owner && owner.position >= 58 && owner.position <= 62 && owner.finishTime == null) {
+    if (owner && owner.position >= RACE_DISTANCE * 0.58 && owner.position <= RACE_DISTANCE * 0.62 && owner.finishTime == null) {
       const sorted = [...allEntries]
         .filter((e) => e.finishTime == null)
         .sort((a, b) => b.position - a.position);
@@ -257,12 +294,55 @@ export function createRaceSimulator(
   // Deep copy buffs so we can mutate triggered state
   const activeBuffs: ActiveBuff[] = (raceBuffs ?? []).map((b) => ({ ...b }));
 
+  // Track which chaos event thresholds have fired
+  const chaosTriggered = new Set<number>();
+
   function tick(): RaceEntry[] {
     if (finishOrder.length >= entries.length) return entries;
     currentTick++;
 
     // Process global buffs first
     processGlobalBuffs(activeBuffs, entries, rand);
+
+    // ── Chaos Events: dramatic moments every ~10% of the race ──────
+    const active = entries.filter((e) => e.finishTime == null);
+    if (active.length > 1) {
+      const leader = active.reduce((a, b) => (a.position > b.position ? a : b));
+      const leaderPct = leader.position / RACE_DISTANCE;
+
+      for (const threshold of [0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90]) {
+        if (leaderPct >= threshold && !chaosTriggered.has(threshold)) {
+          chaosTriggered.add(threshold);
+          const roll = rand();
+
+          if (roll < 0.30) {
+            // Wind Gust: random racer gets a surge (+2-4% of race distance)
+            const lucky = active[Math.floor(rand() * active.length)];
+            lucky.position += RACE_DISTANCE * (0.02 + rand() * 0.02);
+          } else if (roll < 0.55) {
+            // Rockslide: leader stumbles, loses 2-4% of distance
+            const penalty = RACE_DISTANCE * (0.02 + rand() * 0.02);
+            leader.position = Math.max(0, leader.position - penalty);
+          } else if (roll < 0.80) {
+            // Pack Shuffle: compress field — everyone moves toward the average
+            const avg = active.reduce((s, e) => s + e.position, 0) / active.length;
+            for (const e of active) {
+              e.position = e.position + (avg - e.position) * 0.5;
+            }
+          } else {
+            // Position Swap: two random racers swap positions
+            if (active.length >= 2) {
+              const i1 = Math.floor(rand() * active.length);
+              let i2 = Math.floor(rand() * (active.length - 1));
+              if (i2 >= i1) i2++;
+              const temp = active[i1].position;
+              active[i1].position = active[i2].position;
+              active[i2].position = temp;
+            }
+          }
+        }
+      }
+    }
 
     for (const entry of entries) {
       if (entry.finishTime != null) continue;

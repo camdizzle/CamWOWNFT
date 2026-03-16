@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { NFTCharacter, RaceResult } from "../types/nft";
-import { createRace, createRaceSimulator } from "../engines/marbleRace";
+import { createRace, createRaceSimulator, RACE_DISTANCE } from "../engines/marbleRace";
 
 interface RaceTrackProps {
   characters: NFTCharacter[];
@@ -105,7 +105,7 @@ export function RaceTrack({ characters, onRaceComplete }: RaceTrackProps) {
       <div className="race-lanes">
         {characters.map((char, idx) => {
           const pos = positions.find((p) => p.characterId === char.id);
-          const pct = pos ? pos.position : 0;
+          const pct = pos ? (pos.position / RACE_DISTANCE) * 100 : 0;
           const color = MARBLE_COLORS[idx % MARBLE_COLORS.length];
 
           return (
@@ -144,7 +144,11 @@ export function RaceTrack({ characters, onRaceComplete }: RaceTrackProps) {
                           : `#${r.placement}`}
                   </span>
                   <span className="result-name">{char?.name ?? r.characterId}</span>
-                  <span className="result-time">{(r.timeMs / 1000).toFixed(1)}s</span>
+                  <span className="result-time">
+                    {r.timeMs >= 60000
+                      ? `${Math.floor(r.timeMs / 60000)}:${String(Math.floor((r.timeMs % 60000) / 1000)).padStart(2, "0")}`
+                      : `${(r.timeMs / 1000).toFixed(1)}s`}
+                  </span>
                   <span className="result-points">+{r.pointsEarned}pts</span>
                 </div>
               );
