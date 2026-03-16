@@ -11,6 +11,7 @@ import type { NFTCharacter, Battle, BattleAction, BattleResult } from "../types/
 
 const BASE_HP = 50;
 const MAX_ROUNDS = 20;
+const BATTLE_COOLDOWN_MS = 4 * 60 * 60 * 1000; // 4 hours per NFT after a battle
 
 interface FighterState {
   character: NFTCharacter;
@@ -25,6 +26,8 @@ function seededRandom(seed: number): () => number {
     return s / 2147483647;
   };
 }
+
+export { BASE_HP, MAX_ROUNDS, BATTLE_COOLDOWN_MS };
 
 export function simulateBattle(
   challenger: NFTCharacter,
