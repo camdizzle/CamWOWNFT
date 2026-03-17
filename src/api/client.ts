@@ -150,3 +150,37 @@ export const economyApi = {
       body: JSON.stringify(stats),
     }),
 };
+
+// ── Quests ──────────────────────────────────────────────────────────────
+
+export const questApi = {
+  get: (userId: string) =>
+    apiFetch<{ quests: any[]; periodStats: any[] }>(`/quests/${userId}`),
+
+  updateProgress: (userId: string, questId: string, periodKey: string, progress: number, completed: boolean) =>
+    apiFetch<{ message: string }>(`/quests/${userId}/progress`, {
+      method: "POST",
+      body: JSON.stringify({ questId, periodKey, progress, completed }),
+    }),
+
+  batchUpdateProgress: (
+    userId: string,
+    quests: Array<{ questId: string; frequency: string; periodKey: string; progress: number; completed: boolean }>
+  ) =>
+    apiFetch<{ message: string }>(`/quests/${userId}/progress/batch`, {
+      method: "POST",
+      body: JSON.stringify({ quests }),
+    }),
+
+  claimReward: (userId: string, questId: string, periodKey: string, coinReward: number) =>
+    apiFetch<{ message: string; coinsAwarded: number }>(`/quests/${userId}/claim`, {
+      method: "POST",
+      body: JSON.stringify({ questId, periodKey, coinReward }),
+    }),
+
+  updatePeriodStats: (userId: string, periodKey: string, stats: Record<string, number>) =>
+    apiFetch<{ message: string }>(`/quests/${userId}/period-stats`, {
+      method: "POST",
+      body: JSON.stringify({ periodKey, stats }),
+    }),
+};

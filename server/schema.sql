@@ -322,6 +322,39 @@ CREATE TABLE pbp_purchases (
   INDEX idx_pbpp_tx (tx_signature)
 );
 
+-- ── Quests: Player Quest Progress ────────────────────────────────────
+
+CREATE TABLE user_quests (
+  id              INT           AUTO_INCREMENT PRIMARY KEY,
+  user_id         VARCHAR(64)   NOT NULL,
+  quest_id        VARCHAR(64)   NOT NULL,
+  frequency       ENUM('daily','weekly','milestone') NOT NULL,
+  progress        INT           DEFAULT 0,
+  completed       BOOLEAN       DEFAULT FALSE,
+  claimed         BOOLEAN       DEFAULT FALSE,
+  period_key      VARCHAR(20)   NOT NULL,            -- "2026-03-17" for daily, "2026-W12" for weekly, "lifetime" for milestone
+  created_at      TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+  updated_at      TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY uq_user_quest_period (user_id, quest_id, period_key),
+  INDEX idx_uq_user (user_id),
+  INDEX idx_uq_period (user_id, frequency, period_key)
+);
+
+-- ── Quests: Period Stats (tracks stats earned within daily/weekly windows) ──
+
+CREATE TABLE quest_period_stats (
+  id              INT           AUTO_INCREMENT PRIMARY KEY,
+  user_id         VARCHAR(64)   NOT NULL,
+  period_key      VARCHAR(20)   NOT NULL,            -- "2026-03-17" or "2026-W12"
+  stat_key        VARCHAR(64)   NOT NULL,
+  value           INT           DEFAULT 0,
+  updated_at      TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY uq_user_period_stat (user_id, period_key, stat_key),
+  INDEX idx_qps_user (user_id)
+);
+
 -- ── Insert initial season ────────────────────────────────────────────
 
 INSERT INTO seasons (name, start_date, end_date, is_active)

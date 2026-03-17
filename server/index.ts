@@ -7,6 +7,7 @@ import nftRoutes from "./routes/nfts.js";
 import raceRoutes from "./routes/races.js";
 import progressionRoutes from "./routes/progression.js";
 import economyRoutes from "./routes/economy.js";
+import questRoutes from "./routes/quests.js";
 
 dotenv.config();
 
@@ -27,6 +28,7 @@ app.use("/api/nfts", nftRoutes);
 app.use("/api/races", raceRoutes);
 app.use("/api/progression", progressionRoutes);
 app.use("/api/economy", economyRoutes);
+app.use("/api/quests", questRoutes);
 
 // ── Health check ───────────────────────────────────────────────────────
 
