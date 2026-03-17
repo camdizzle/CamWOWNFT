@@ -10,7 +10,7 @@ export interface BuffDefinition {
   description: string;
   rarity: BuffRarity;
   cost: number; // coins (0 if PBP-only)
-  pbpPrice: number; // PBP token price (0 if coins-only, >0 if purchasable with PBP)
+  pbpPrice: number; // PBP token price in PBP (0 if coins-only, >0 if purchasable with PBP)
   premiumOnly: boolean; // true = PBP purchase only, false = coins OR PBP
   icon: string;
   tags?: string[]; // e.g. ["anti-leader"] for abuse-limit grouping
@@ -29,14 +29,14 @@ export interface ActiveBuff {
 // ── Buff Catalog ───────────────────────────────────────────────────────
 
 export const BUFF_CATALOG: BuffDefinition[] = [
-  // ─── Common (30-50 coins OR 0.005-0.01 SOL) ──────────────────────
+  // ─── Common (30-50 coins OR ~37-60 PBP) ──────────────────────
   {
     id: "nitro_boost",
     name: "Nitro Boost",
     description: "+30% speed for one burst at a random point in the race.",
     rarity: "common",
     cost: 30,
-    pbpPrice: 0.005,
+    pbpPrice: 37.5,
     premiumOnly: false,
     icon: "🚀",
   },
@@ -46,7 +46,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "A random opponent hits a slowdown obstacle mid-race.",
     rarity: "common",
     cost: 40,
-    pbpPrice: 0.007,
+    pbpPrice: 52.5,
     premiumOnly: false,
     icon: "🍌",
   },
@@ -56,7 +56,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "Fatigue point delayed by 20% — stay fast longer.",
     rarity: "common",
     cost: 35,
-    pbpPrice: 0.006,
+    pbpPrice: 45,
     premiumOnly: false,
     icon: "⚡",
   },
@@ -66,7 +66,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "Luck burst chance doubled for this race.",
     rarity: "common",
     cost: 30,
-    pbpPrice: 0.005,
+    pbpPrice: 37.5,
     premiumOnly: false,
     icon: "🪙",
   },
@@ -76,20 +76,20 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "If you're NOT in 1st place, get a speed boost during the 25-65% stretch.",
     rarity: "common",
     cost: 45,
-    pbpPrice: 0.008,
+    pbpPrice: 60,
     premiumOnly: false,
     icon: "🌬️",
     tags: ["anti-leader"],
   },
 
-  // ─── Uncommon (60-90 coins OR 0.01-0.015 SOL) ────────────────────
+  // ─── Uncommon (60-90 coins OR ~75-97.5 PBP) ────────────────────
   {
     id: "slipstream",
     name: "Slipstream",
     description: "Draft behind the leader — speed boost in the final 20% if you're 2nd-4th.",
     rarity: "uncommon",
     cost: 70,
-    pbpPrice: 0.012,
+    pbpPrice: 90,
     premiumOnly: false,
     icon: "💨",
   },
@@ -99,7 +99,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "Double your luck stat for this race.",
     rarity: "uncommon",
     cost: 60,
-    pbpPrice: 0.01,
+    pbpPrice: 75,
     premiumOnly: false,
     icon: "🍀",
   },
@@ -109,7 +109,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "Collision penalties reduced by 75%.",
     rarity: "uncommon",
     cost: 65,
-    pbpPrice: 0.011,
+    pbpPrice: 82.5,
     premiumOnly: false,
     icon: "🛞",
   },
@@ -119,19 +119,19 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "Start the race at position 5 instead of 0.",
     rarity: "uncommon",
     cost: 80,
-    pbpPrice: 0.013,
+    pbpPrice: 97.5,
     premiumOnly: false,
     icon: "🏃",
   },
 
-  // ─── Rare (100-150 coins OR 0.02-0.03 SOL) ─────────────────────
+  // ─── Rare (100-150 coins OR ~135-187.5 PBP) ─────────────────────
   {
     id: "shield_wall",
     name: "Shield Wall",
     description: "Immune to ALL collision penalties this race.",
     rarity: "rare",
     cost: 120,
-    pbpPrice: 0.02,
+    pbpPrice: 150,
     premiumOnly: false,
     icon: "🛡️",
   },
@@ -141,7 +141,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "Charisma crowd boost activates from 40% instead of 70%.",
     rarity: "rare",
     cost: 100,
-    pbpPrice: 0.018,
+    pbpPrice: 135,
     premiumOnly: false,
     icon: "📣",
   },
@@ -151,7 +151,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "+15% base speed for the entire race.",
     rarity: "rare",
     cost: 140,
-    pbpPrice: 0.025,
+    pbpPrice: 187.5,
     premiumOnly: false,
     icon: "🔥",
   },
@@ -161,20 +161,20 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "The leader's collision rate triples and speed drops during the 40-80% stretch.",
     rarity: "rare",
     cost: 110,
-    pbpPrice: 0.02,
+    pbpPrice: 150,
     premiumOnly: false,
     icon: "🔦",
     tags: ["anti-leader"],
   },
 
-  // ─── Epic (200-300 coins OR 0.04-0.06 SOL) ─────────────────────
+  // ─── Epic (200-300 coins OR ~262.5-375 PBP) ─────────────────────
   {
     id: "earthquake",
     name: "Earthquake",
     description: "ALL racers get a random slowdown at the 50% mark — chaos equalizer.",
     rarity: "epic",
     cost: 200,
-    pbpPrice: 0.04,
+    pbpPrice: 300,
     premiumOnly: false,
     icon: "🌋",
   },
@@ -184,7 +184,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "Swap positions with the racer directly ahead of you at the 60% mark.",
     rarity: "epic",
     cost: 250,
-    pbpPrice: 0.05,
+    pbpPrice: 375,
     premiumOnly: false,
     icon: "⏳",
   },
@@ -194,7 +194,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "Your agility shortcut chance is tripled for the entire race.",
     rarity: "epic",
     cost: 220,
-    pbpPrice: 0.045,
+    pbpPrice: 337.5,
     premiumOnly: false,
     icon: "👥",
   },
@@ -204,20 +204,20 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "When the leader reaches 65%, they get hit with a 6% position penalty.",
     rarity: "epic",
     cost: 180,
-    pbpPrice: 0.035,
+    pbpPrice: 262.5,
     premiumOnly: false,
     icon: "🐚",
     tags: ["anti-leader"],
   },
 
-  // ─── Legendary (400-500 coins OR 0.08-0.1 SOL) ────────────────
+  // ─── Legendary (400-500 coins OR ~600-675 PBP) ────────────────
   {
     id: "ghost_mode",
     name: "Ghost Mode",
     description: "Phase through all obstacles for the first 40% of the race.",
     rarity: "legendary",
     cost: 400,
-    pbpPrice: 0.08,
+    pbpPrice: 600,
     premiumOnly: false,
     icon: "👻",
   },
@@ -227,19 +227,19 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "If you finish within 0.5s of the winner, you ALSO get 1st place points.",
     rarity: "legendary",
     cost: 450,
-    pbpPrice: 0.09,
+    pbpPrice: 675,
     premiumOnly: false,
     icon: "📸",
   },
 
-  // ─── PREMIUM ONLY (SOL purchase only) ──────────────────────────
+  // ─── PREMIUM ONLY (PBP purchase only) ──────────────────────────
   {
     id: "warp_drive",
     name: "Warp Drive",
     description: "Teleport to 1st place position at the 75% mark. One-time burst.",
     rarity: "legendary",
     cost: 0,
-    pbpPrice: 0.15,
+    pbpPrice: 1125,
     premiumOnly: true,
     icon: "🌀",
   },
@@ -249,7 +249,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "All opponents within 10% of your position get pulled back 5% at the 50% mark.",
     rarity: "epic",
     cost: 0,
-    pbpPrice: 0.08,
+    pbpPrice: 600,
     premiumOnly: true,
     icon: "🕳️",
   },
@@ -259,7 +259,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "Copy the best buff active in the race and apply it to yourself.",
     rarity: "epic",
     cost: 0,
-    pbpPrice: 0.07,
+    pbpPrice: 525,
     premiumOnly: true,
     icon: "🪞",
   },
@@ -269,7 +269,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "+50% coin earnings from this race. Stacks with placement bonuses.",
     rarity: "rare",
     cost: 0,
-    pbpPrice: 0.03,
+    pbpPrice: 225,
     premiumOnly: true,
     icon: "🎫",
   },
@@ -279,7 +279,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "When you drop below 4th place, get a massive +40% speed burst for 3 ticks.",
     rarity: "uncommon",
     cost: 0,
-    pbpPrice: 0.02,
+    pbpPrice: 150,
     premiumOnly: true,
     icon: "💉",
   },
