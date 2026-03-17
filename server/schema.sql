@@ -306,20 +306,20 @@ CREATE TABLE season_prize_pool (
   INDEX idx_spp_season (season_id)
 );
 
--- ── SOL Purchases (audit log for all SOL transactions) ──────────────
+-- ── PBP Purchases (audit log for all PBP token transactions) ──────────
 
-CREATE TABLE sol_purchases (
+CREATE TABLE pbp_purchases (
   id              INT           AUTO_INCREMENT PRIMARY KEY,
   user_id         VARCHAR(64)   NOT NULL,
   item_type       ENUM('buff','entry_fee') NOT NULL,
   item_id         VARCHAR(64)   NOT NULL,              -- buff_id or race_id
-  sol_amount      DECIMAL(18,9) NOT NULL,
+  pbp_amount      DECIMAL(18,9) NOT NULL,
   treasury_wallet VARCHAR(100)  NOT NULL,
   tx_signature    VARCHAR(128)  DEFAULT NULL,          -- Solana tx signature for verification
   purchased_at    TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  INDEX idx_solp_user (user_id),
-  INDEX idx_solp_tx (tx_signature)
+  INDEX idx_pbpp_user (user_id),
+  INDEX idx_pbpp_tx (tx_signature)
 );
 
 -- ── Insert initial season ────────────────────────────────────────────

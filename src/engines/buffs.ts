@@ -1,5 +1,5 @@
 // ── Race Buff System ───────────────────────────────────────────────────
-// Buffs are purchasable with coins OR SOL. Some premium buffs are SOL-only.
+// Buffs are purchasable with coins OR PBP token. Some premium buffs are PBP-only.
 // Max 2 buffs per NFT per race. Consumed on use.
 
 export type BuffRarity = "common" | "uncommon" | "rare" | "epic" | "legendary";
@@ -9,9 +9,9 @@ export interface BuffDefinition {
   name: string;
   description: string;
   rarity: BuffRarity;
-  cost: number; // coins (0 if SOL-only)
-  solPrice: number; // SOL price (0 if coins-only, >0 if purchasable with SOL)
-  premiumOnly: boolean; // true = SOL purchase only, false = coins OR SOL
+  cost: number; // coins (0 if PBP-only)
+  pbpPrice: number; // PBP token price (0 if coins-only, >0 if purchasable with PBP)
+  premiumOnly: boolean; // true = PBP purchase only, false = coins OR PBP
   icon: string;
   tags?: string[]; // e.g. ["anti-leader"] for abuse-limit grouping
 }
@@ -36,7 +36,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "+30% speed for one burst at a random point in the race.",
     rarity: "common",
     cost: 30,
-    solPrice: 0.005,
+    pbpPrice: 0.005,
     premiumOnly: false,
     icon: "🚀",
   },
@@ -46,7 +46,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "A random opponent hits a slowdown obstacle mid-race.",
     rarity: "common",
     cost: 40,
-    solPrice: 0.007,
+    pbpPrice: 0.007,
     premiumOnly: false,
     icon: "🍌",
   },
@@ -56,7 +56,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "Fatigue point delayed by 20% — stay fast longer.",
     rarity: "common",
     cost: 35,
-    solPrice: 0.006,
+    pbpPrice: 0.006,
     premiumOnly: false,
     icon: "⚡",
   },
@@ -66,7 +66,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "Luck burst chance doubled for this race.",
     rarity: "common",
     cost: 30,
-    solPrice: 0.005,
+    pbpPrice: 0.005,
     premiumOnly: false,
     icon: "🪙",
   },
@@ -76,7 +76,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "If you're NOT in 1st place, get a speed boost during the 25-65% stretch.",
     rarity: "common",
     cost: 45,
-    solPrice: 0.008,
+    pbpPrice: 0.008,
     premiumOnly: false,
     icon: "🌬️",
     tags: ["anti-leader"],
@@ -89,7 +89,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "Draft behind the leader — speed boost in the final 20% if you're 2nd-4th.",
     rarity: "uncommon",
     cost: 70,
-    solPrice: 0.012,
+    pbpPrice: 0.012,
     premiumOnly: false,
     icon: "💨",
   },
@@ -99,7 +99,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "Double your luck stat for this race.",
     rarity: "uncommon",
     cost: 60,
-    solPrice: 0.01,
+    pbpPrice: 0.01,
     premiumOnly: false,
     icon: "🍀",
   },
@@ -109,7 +109,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "Collision penalties reduced by 75%.",
     rarity: "uncommon",
     cost: 65,
-    solPrice: 0.011,
+    pbpPrice: 0.011,
     premiumOnly: false,
     icon: "🛞",
   },
@@ -119,7 +119,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "Start the race at position 5 instead of 0.",
     rarity: "uncommon",
     cost: 80,
-    solPrice: 0.013,
+    pbpPrice: 0.013,
     premiumOnly: false,
     icon: "🏃",
   },
@@ -131,7 +131,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "Immune to ALL collision penalties this race.",
     rarity: "rare",
     cost: 120,
-    solPrice: 0.02,
+    pbpPrice: 0.02,
     premiumOnly: false,
     icon: "🛡️",
   },
@@ -141,7 +141,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "Charisma crowd boost activates from 40% instead of 70%.",
     rarity: "rare",
     cost: 100,
-    solPrice: 0.018,
+    pbpPrice: 0.018,
     premiumOnly: false,
     icon: "📣",
   },
@@ -151,7 +151,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "+15% base speed for the entire race.",
     rarity: "rare",
     cost: 140,
-    solPrice: 0.025,
+    pbpPrice: 0.025,
     premiumOnly: false,
     icon: "🔥",
   },
@@ -161,7 +161,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "The leader's collision rate triples and speed drops during the 40-80% stretch.",
     rarity: "rare",
     cost: 110,
-    solPrice: 0.02,
+    pbpPrice: 0.02,
     premiumOnly: false,
     icon: "🔦",
     tags: ["anti-leader"],
@@ -174,7 +174,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "ALL racers get a random slowdown at the 50% mark — chaos equalizer.",
     rarity: "epic",
     cost: 200,
-    solPrice: 0.04,
+    pbpPrice: 0.04,
     premiumOnly: false,
     icon: "🌋",
   },
@@ -184,7 +184,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "Swap positions with the racer directly ahead of you at the 60% mark.",
     rarity: "epic",
     cost: 250,
-    solPrice: 0.05,
+    pbpPrice: 0.05,
     premiumOnly: false,
     icon: "⏳",
   },
@@ -194,7 +194,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "Your agility shortcut chance is tripled for the entire race.",
     rarity: "epic",
     cost: 220,
-    solPrice: 0.045,
+    pbpPrice: 0.045,
     premiumOnly: false,
     icon: "👥",
   },
@@ -204,7 +204,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "When the leader reaches 65%, they get hit with a 6% position penalty.",
     rarity: "epic",
     cost: 180,
-    solPrice: 0.035,
+    pbpPrice: 0.035,
     premiumOnly: false,
     icon: "🐚",
     tags: ["anti-leader"],
@@ -217,7 +217,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "Phase through all obstacles for the first 40% of the race.",
     rarity: "legendary",
     cost: 400,
-    solPrice: 0.08,
+    pbpPrice: 0.08,
     premiumOnly: false,
     icon: "👻",
   },
@@ -227,7 +227,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "If you finish within 0.5s of the winner, you ALSO get 1st place points.",
     rarity: "legendary",
     cost: 450,
-    solPrice: 0.09,
+    pbpPrice: 0.09,
     premiumOnly: false,
     icon: "📸",
   },
@@ -239,7 +239,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "Teleport to 1st place position at the 75% mark. One-time burst.",
     rarity: "legendary",
     cost: 0,
-    solPrice: 0.15,
+    pbpPrice: 0.15,
     premiumOnly: true,
     icon: "🌀",
   },
@@ -249,7 +249,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "All opponents within 10% of your position get pulled back 5% at the 50% mark.",
     rarity: "epic",
     cost: 0,
-    solPrice: 0.08,
+    pbpPrice: 0.08,
     premiumOnly: true,
     icon: "🕳️",
   },
@@ -259,7 +259,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "Copy the best buff active in the race and apply it to yourself.",
     rarity: "epic",
     cost: 0,
-    solPrice: 0.07,
+    pbpPrice: 0.07,
     premiumOnly: true,
     icon: "🪞",
   },
@@ -269,7 +269,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "+50% coin earnings from this race. Stacks with placement bonuses.",
     rarity: "rare",
     cost: 0,
-    solPrice: 0.03,
+    pbpPrice: 0.03,
     premiumOnly: true,
     icon: "🎫",
   },
@@ -279,7 +279,7 @@ export const BUFF_CATALOG: BuffDefinition[] = [
     description: "When you drop below 4th place, get a massive +40% speed burst for 3 ticks.",
     rarity: "uncommon",
     cost: 0,
-    solPrice: 0.02,
+    pbpPrice: 0.02,
     premiumOnly: true,
     icon: "💉",
   },
@@ -338,12 +338,12 @@ export interface BuffInventoryItem {
 
 // ── Currency helpers ───────────────────────────────────────────────────
 
-export type PurchaseCurrency = "coins" | "sol";
+export type PurchaseCurrency = "coins" | "pbp";
 
 export function canPurchaseWithCoins(buff: BuffDefinition): boolean {
   return !buff.premiumOnly && buff.cost > 0;
 }
 
-export function canPurchaseWithSol(buff: BuffDefinition): boolean {
-  return buff.solPrice > 0;
+export function canPurchaseWithPbp(buff: BuffDefinition): boolean {
+  return buff.pbpPrice > 0;
 }

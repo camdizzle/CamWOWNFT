@@ -4,7 +4,7 @@ import {
   RARITY_COLORS,
   MAX_BUFFS_PER_ENTRY,
   canPurchaseWithCoins,
-  canPurchaseWithSol,
+  canPurchaseWithPbp,
 } from "../engines/buffs";
 import type { BuffRarity, BuffDefinition, PurchaseCurrency } from "../engines/buffs";
 import type { UseEconomyResult } from "../hooks/useEconomy";
@@ -45,14 +45,14 @@ export function BuffShop({ economy }: BuffShopProps) {
     }
   }
 
-  function handleBuyWithSol(buff: BuffDefinition) {
-    if (!canPurchaseWithSol(buff)) return;
-    // SOL purchase: triggers wallet signing flow
-    const result = economy.buyBuffWithSol(buff.id, buff.solPrice);
+  function handleBuyWithPbp(buff: BuffDefinition) {
+    if (!canPurchaseWithPbp(buff)) return;
+    // PBP purchase: triggers wallet signing flow
+    const result = economy.buyBuffWithPbp(buff.id, buff.pbpPrice);
     if (result.ok) {
-      showMessage(`Purchased ${buff.name} for ${buff.solPrice} SOL!`);
+      showMessage(`Purchased ${buff.name} for ${buff.pbpPrice} PBP!`);
     } else {
-      showMessage(result.reason ?? "SOL purchase failed.", "error");
+      showMessage(result.reason ?? "PBP purchase failed.", "error");
     }
   }
 
@@ -95,7 +95,7 @@ export function BuffShop({ economy }: BuffShopProps) {
           className={`shop-filter shop-filter-premium ${filter === "premium" ? "active" : ""}`}
           onClick={() => setFilter("premium")}
         >
-          SOL Only
+          PBP Only
         </button>
       </div>
 
@@ -103,7 +103,7 @@ export function BuffShop({ economy }: BuffShopProps) {
         {filtered.map((buff) => {
           const owned = economy.getBuffCount(buff.id);
           const canBuyCoins = canPurchaseWithCoins(buff) && economy.coins >= buff.cost;
-          const canBuySol = canPurchaseWithSol(buff);
+          const canBuyPbp = canPurchaseWithPbp(buff);
 
           return (
             <div
@@ -121,7 +121,7 @@ export function BuffShop({ economy }: BuffShopProps) {
                     {buff.rarity}
                   </span>
                   {buff.premiumOnly && (
-                    <span className="shop-card-premium-badge">SOL ONLY</span>
+                    <span className="shop-card-premium-badge">PBP ONLY</span>
                   )}
                 </div>
               </div>
@@ -134,9 +134,9 @@ export function BuffShop({ economy }: BuffShopProps) {
                       🪙 {buff.cost}
                     </span>
                   )}
-                  {canPurchaseWithSol(buff) && (
-                    <span className="shop-card-cost shop-card-cost-sol">
-                      ◎ {buff.solPrice}
+                  {canPurchaseWithPbp(buff) && (
+                    <span className="shop-card-cost shop-card-cost-pbp">
+                      PBP {buff.pbpPrice}
                     </span>
                   )}
                 </div>
@@ -153,12 +153,12 @@ export function BuffShop({ economy }: BuffShopProps) {
                       Buy (Coins)
                     </button>
                   )}
-                  {canBuySol && (
+                  {canBuyPbp && (
                     <button
-                      className="btn btn-sm btn-sol"
-                      onClick={() => handleBuyWithSol(buff)}
+                      className="btn btn-sm btn-pbp"
+                      onClick={() => handleBuyWithPbp(buff)}
                     >
-                      Buy (SOL)
+                      Buy (PBP)
                     </button>
                   )}
                 </div>
@@ -188,7 +188,7 @@ export function BuffShop({ economy }: BuffShopProps) {
                   <span className="inventory-icon">{def.icon}</span>
                   <span className="inventory-name">{def.name}</span>
                   <span className="inventory-qty">x{item.quantity}</span>
-                  {def.premiumOnly && <span className="inventory-premium-badge">SOL</span>}
+                  {def.premiumOnly && <span className="inventory-premium-badge">PBP</span>}
                 </div>
               );
             })}

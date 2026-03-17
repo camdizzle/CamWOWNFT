@@ -121,7 +121,7 @@ CamWOWNFT/
 │       ├── RaceLobby.tsx       # Lobby entry UI
 │       ├── BattleArena.tsx     # Battle animation + round log
 │       ├── Leaderboard.tsx     # Leaderboard table
-│       ├── BuffShop.tsx        # Unified dual-currency buff shop (coins + SOL)
+│       ├── BuffShop.tsx        # Unified dual-currency buff shop (coins + PBP)
 │       ├── SeasonPoolGauge.tsx # Visual gauge for season PBP prize pool
 │       ├── AchievementsPanel.tsx # Achievement grid
 │       └── WalletManager.tsx   # Wallet add/remove UI
@@ -233,7 +233,7 @@ All tables use the `camwow_arena` database. Below is every table with its purpos
 | `premium_race_payments` | PBP entry fee audit log | `race_id`, `user_id`, `nft_id`, `amount_pbp`, `treasury_wallet` |
 | `premium_race_payouts` | PBP prize distributions | `race_id`, `nft_id`, `placement`, `amount_pbp` |
 | `season_prize_pool` | 35% of premium fees → season pool | `season_id`, `race_id`, `amount_pbp` |
-| `sol_purchases` | All SOL transactions (buff buys) | `user_id`, `item_type`, `item_id`, `sol_amount`, `tx_signature` |
+| `pbp_purchases` | All PBP token transactions (buff buys) | `user_id`, `item_type`, `item_id`, `pbp_amount`, `tx_signature` |
 
 ### Key Relationships
 
@@ -578,11 +578,11 @@ The progression bonus is applied BEFORE the race soft cap, so high-progression N
 
 **File:** `src/engines/buffs.ts`
 
-21 buffs across 5 rarity tiers. Regular buffs can be purchased with **coins OR SOL**. Premium buffs are **SOL-only**.
+21 buffs across 5 rarity tiers. Regular buffs can be purchased with **coins OR PBP**. Premium buffs are **PBP-only**.
 
-#### Regular Buffs (Coins or SOL)
+#### Regular Buffs (Coins or PBP)
 
-| Rarity | Coin Cost | SOL Price | Examples |
+| Rarity | Coin Cost | PBP Price | Examples |
 |--------|-----------|-----------|---------|
 | Common | 30-40 | 0.005-0.007 | Nitro Boost, Banana Peel, Energy Drink, Lucky Penny |
 | Uncommon | 60-80 | 0.01-0.013 | Slipstream, Four-Leaf Clover, Rubber Bumpers, Head Start |
@@ -590,9 +590,9 @@ The progression bonus is applied BEFORE the race soft cap, so high-progression N
 | Epic | 200-250 | 0.04-0.05 | Earthquake, Time Warp, Clone Sprint |
 | Legendary | 400-450 | 0.08-0.09 | Ghost Mode, Photo Finish |
 
-#### Premium Buffs (SOL Only)
+#### Premium Buffs (PBP Only)
 
-| Buff | Rarity | SOL Price | Effect |
+| Buff | Rarity | PBP Price | Effect |
 |------|--------|-----------|--------|
 | Warp Drive | Legendary | 0.15 | Teleport to 1st place at 75% mark |
 | Gravity Well | Epic | 0.08 | Pull nearby opponents back 5% at 50% mark |
@@ -600,7 +600,7 @@ The progression bonus is applied BEFORE the race soft cap, so high-progression N
 | Golden Ticket | Rare | 0.03 | +50% coin earnings from this race |
 | Adrenaline Surge | Uncommon | 0.02 | +40% speed burst when dropping below 4th |
 
-All SOL purchases are sent to the treasury wallet: `HtPe6EYLgmT3UzyZeBCLg5vX5JjsxpoggtXkRYYx6oN5`
+All PBP purchases are sent to the treasury wallet: `HtPe6EYLgmT3UzyZeBCLg5vX5JjsxpoggtXkRYYx6oN5`
 
 ### 11.3 Achievements
 
@@ -676,7 +676,7 @@ GET  /api/races/lobby/current
 
 The platform generates revenue through two channels:
 
-1. **SOL Buff Sales** — Users buy buffs with SOL (sent to treasury wallet)
+1. **PBP Buff Sales** — Users buy buffs with PBP token (sent to treasury wallet)
 2. **Premium Race Entry Fees** — 50 PBP per NFT per premium race (35% retained in treasury)
 
 **Treasury Wallet:** `HtPe6EYLgmT3UzyZeBCLg5vX5JjsxpoggtXkRYYx6oN5`
@@ -713,19 +713,19 @@ This drives competition by making the growing pot visible to all players.
 
 The shop displays all buffs in a single interface with dual-currency pricing:
 
-- **Regular buffs** (16): Show both coin price and SOL price. User chooses which to pay with.
-- **Premium buffs** (5): SOL-only. Marked with "SOL ONLY" badge. Cannot be purchased with coins.
-- **Filter tabs:** All | Common | Uncommon | Rare | Epic | Legendary | SOL Only
+- **Regular buffs** (16): Show both coin price and PBP price. User chooses which to pay with.
+- **Premium buffs** (5): PBP-only. Marked with "PBP ONLY" badge. Cannot be purchased with coins.
+- **Filter tabs:** All | Common | Uncommon | Rare | Epic | Legendary | PBP Only
 
-SOL purchases trigger a Solana wallet transaction to the treasury wallet. In production, the server validates the on-chain transaction signature before crediting the buff.
+PBP purchases trigger a Solana wallet transaction to the treasury wallet. In production, the server validates the on-chain transaction signature before crediting the buff.
 
-### 13.5 SOL Transaction Flow
+### 13.5 PBP Transaction Flow
 
-1. User clicks "Buy (SOL)" on a buff
-2. Frontend creates a SOL transfer instruction to treasury wallet
+1. User clicks "Buy (PBP)" on a buff
+2. Frontend creates a PBP token transfer instruction to treasury wallet
 3. User signs the transaction with their connected Solana wallet (Phantom, etc.)
-4. On confirmation, frontend calls `POST /api/economy/:userId/buffs/buy-sol` with the tx signature
-5. Server records the purchase in `sol_purchases` table and credits the buff to inventory
+4. On confirmation, frontend calls `POST /api/economy/:userId/buffs/buy-pbp` with the tx signature
+5. Server records the purchase in `pbp_purchases` table and credits the buff to inventory
 
 **Production TODO:** Server-side Solana RPC verification of `tx_signature` before crediting buffs.
 
@@ -784,7 +784,7 @@ SOL purchases trigger a Solana wallet transaction to the treasury wallet. In pro
 | GET | `/economy/:userId` | — | `{ coins, inventory, achievements, playerStats }` |
 | POST | `/economy/:userId/coins/add` | `{ amount }` | `{ message }` |
 | POST | `/economy/:userId/buffs/buy` | `{ buffId, cost }` | `{ message }` |
-| POST | `/economy/:userId/buffs/buy-sol` | `{ buffId, solPrice, txSignature? }` | `{ message, treasuryWallet }` |
+| POST | `/economy/:userId/buffs/buy-pbp` | `{ buffId, pbpPrice, txSignature? }` | `{ message, treasuryWallet }` |
 | POST | `/economy/:userId/buffs/consume` | `{ buffId }` | `{ message }` |
 | POST | `/economy/:userId/achievements/unlock` | `{ achievementId, coinReward }` | `{ message }` |
 | POST | `/economy/:userId/stats` | PlayerStats object | `{ message }` |
@@ -928,8 +928,8 @@ If you want the fastest path to a working app with your users table:
 ### Monetization Setup
 
 - [ ] Verify treasury wallet `HtPe6EYLgmT3UzyZeBCLg5vX5JjsxpoggtXkRYYx6oN5` is correct and accessible
-- [ ] Implement server-side Solana RPC verification of SOL transaction signatures in `POST /economy/:userId/buffs/buy-sol`
-- [ ] Integrate Solana wallet adapter (Phantom, Solflare) for frontend SOL transactions
+- [ ] Implement server-side Solana RPC verification of PBP transaction signatures in `POST /economy/:userId/buffs/buy-pbp`
+- [ ] Integrate Solana wallet adapter (Phantom, Solflare) for frontend PBP token transactions
 - [ ] Implement PBP token transfer for premium race entry fees and prize payouts
 - [ ] Set up season-end PBP distribution script based on leaderboard standings
 - [ ] Configure PBP token contract address and treasury approval
@@ -939,7 +939,7 @@ If you want the fastest path to a working app with your users table:
 - [ ] **API auth:** Add JWT or session tokens. Currently all API routes are unprotected — anyone who knows a userId can call economy/progression endpoints
 - [ ] **Race result validation:** Race results are currently submitted by the client. In production, run the race simulation server-side using the stored seed and verify results match
 - [ ] **Wallet verification:** Require signed messages to prove wallet ownership before linking
-- [ ] **SOL transaction verification:** Validate all SOL purchase tx signatures on-chain before crediting buffs
+- [ ] **PBP transaction verification:** Validate all PBP purchase tx signatures on-chain before crediting buffs
 - [ ] **PBP payment verification:** Verify PBP token transfers for premium race entries before allowing lobby joins
 - [ ] **Rate limiting:** Protect coin/buff/achievement endpoints from abuse
 - [ ] **Input validation:** Sanitize all user inputs (addresses, buff IDs, etc.)

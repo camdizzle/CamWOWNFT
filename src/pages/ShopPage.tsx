@@ -17,7 +17,7 @@ export function ShopPage({ economy }: ShopPageProps) {
       <div className="page-header">
         <h1>🪙 Shop & Achievements</h1>
         <p className="subtitle">
-          Buy buffs with coins or SOL — premium buffs are SOL-only
+          Buy buffs with coins or PBP token — premium buffs are PBP-only
         </p>
       </div>
 

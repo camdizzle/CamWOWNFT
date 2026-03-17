@@ -156,16 +156,16 @@ router.post("/:userId/buffs/buy", async (req, res) => {
   }
 });
 
-// ── Buy buff (with SOL) ────────────────────────────────────────────────
-// In production: validate the Solana transaction signature on-chain before
-// crediting the buff. For now, records the purchase and credits inventory.
+// ── Buy buff (with PBP token) ──────────────────────────────────────────
+// In production: validate the PBP token transaction signature on-chain
+// before crediting the buff. For now, records the purchase and credits inventory.
 
-router.post("/:userId/buffs/buy-sol", async (req, res) => {
+router.post("/:userId/buffs/buy-pbp", async (req, res) => {
   const { userId } = req.params;
-  const { buffId, solPrice, txSignature } = req.body;
+  const { buffId, pbpPrice, txSignature } = req.body;
 
-  if (!buffId || typeof solPrice !== "number") {
-    res.status(400).json({ error: "buffId and solPrice required" });
+  if (!buffId || typeof pbpPrice !== "number") {
+    res.status(400).json({ error: "buffId and pbpPrice required" });
     return;
   }
 
@@ -173,11 +173,11 @@ router.post("/:userId/buffs/buy-sol", async (req, res) => {
   try {
     await conn.beginTransaction();
 
-    // Record SOL purchase (audit trail)
+    // Record PBP purchase (audit trail)
     await conn.execute(
-      `INSERT INTO sol_purchases (user_id, item_type, item_id, sol_amount, treasury_wallet, tx_signature)
+      `INSERT INTO pbp_purchases (user_id, item_type, item_id, pbp_amount, treasury_wallet, tx_signature)
        VALUES (?, 'buff', ?, ?, ?, ?)`,
-      [userId, buffId, solPrice, TREASURY_WALLET, txSignature || null]
+      [userId, buffId, pbpPrice, TREASURY_WALLET, txSignature || null]
     );
 
     // Add to inventory
@@ -189,10 +189,10 @@ router.post("/:userId/buffs/buy-sol", async (req, res) => {
     );
 
     await conn.commit();
-    res.json({ message: "Buff purchased with SOL", currency: "sol", treasuryWallet: TREASURY_WALLET });
+    res.json({ message: "Buff purchased with PBP", currency: "pbp", treasuryWallet: TREASURY_WALLET });
   } catch (err) {
     await conn.rollback();
-    console.error("Buy buff SOL error:", err);
+    console.error("Buy buff PBP error:", err);
     res.status(500).json({ error: "Database error" });
   } finally {
     conn.release();

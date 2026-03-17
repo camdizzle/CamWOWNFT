@@ -126,10 +126,10 @@ export const economyApi = {
       body: JSON.stringify({ buffId, cost }),
     }),
 
-  buyBuffWithSol: (userId: string, buffId: string, solPrice: number, txSignature?: string) =>
-    apiFetch<{ message: string; treasuryWallet: string }>(`/economy/${userId}/buffs/buy-sol`, {
+  buyBuffWithPbp: (userId: string, buffId: string, pbpPrice: number, txSignature?: string) =>
+    apiFetch<{ message: string; treasuryWallet: string }>(`/economy/${userId}/buffs/buy-pbp`, {
       method: "POST",
-      body: JSON.stringify({ buffId, solPrice, txSignature }),
+      body: JSON.stringify({ buffId, pbpPrice, txSignature }),
     }),
 
   consumeBuff: (userId: string, buffId: string) =>

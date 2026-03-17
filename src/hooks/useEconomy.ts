@@ -56,7 +56,7 @@ export interface UseEconomyResult {
   addCoins: (amount: number) => void;
   spendCoins: (amount: number) => boolean;
   buyBuff: (buffId: string) => { ok: boolean; reason?: string };
-  buyBuffWithSol: (buffId: string, solPrice: number) => { ok: boolean; reason?: string };
+  buyBuffWithPbp: (buffId: string, pbpPrice: number) => { ok: boolean; reason?: string };
   consumeBuff: (buffId: string) => boolean;
   processRaceReward: (placement: number) => {
     coinsEarned: number;
@@ -148,7 +148,7 @@ export function useEconomy(): UseEconomyResult {
   const buyBuff = useCallback((buffId: string): { ok: boolean; reason?: string } => {
     const def = BUFF_MAP.get(buffId);
     if (!def) return { ok: false, reason: "Unknown buff." };
-    if (def.premiumOnly) return { ok: false, reason: "This buff can only be purchased with SOL." };
+    if (def.premiumOnly) return { ok: false, reason: "This buff can only be purchased with PBP." };
 
     let purchaseOk = false;
     setCoins((prevCoins) => {
@@ -183,20 +183,20 @@ export function useEconomy(): UseEconomyResult {
     return { ok: true };
   }, [userId]);
 
-  // ── Buff Shop (SOL) ────────────────────────────────────────────────
+  // ── Buff Shop (PBP Token) ──────────────────────────────────────────
 
-  const buyBuffWithSol = useCallback((buffId: string, solPrice: number): { ok: boolean; reason?: string } => {
+  const buyBuffWithPbp = useCallback((buffId: string, pbpPrice: number): { ok: boolean; reason?: string } => {
     const def = BUFF_MAP.get(buffId);
     if (!def) return { ok: false, reason: "Unknown buff." };
-    if (def.solPrice <= 0) return { ok: false, reason: "This buff cannot be purchased with SOL." };
+    if (def.pbpPrice <= 0) return { ok: false, reason: "This buff cannot be purchased with PBP." };
 
-    // In production, this would trigger a Solana wallet transaction:
+    // In production, this would trigger a PBP token transfer:
     // 1. Create SPL transfer instruction to TREASURY_WALLET
-    // 2. User signs with their connected Solana wallet (Phantom, etc.)
+    // 2. User signs with their connected wallet (Phantom, etc.)
     // 3. On confirmation, server validates the tx and credits the buff
     //
     // For now, we optimistically add to inventory and sync with server.
-    // The server endpoint will verify the Solana transaction signature.
+    // The server endpoint will verify the transaction signature.
 
     setInventory((prev) => {
       const existing = prev.find((i) => i.buffId === buffId);
@@ -212,9 +212,9 @@ export function useEconomy(): UseEconomyResult {
       return next;
     });
 
-    // Server sync — passes SOL transaction details
+    // Server sync — passes PBP transaction details
     if (userId) {
-      economyApi.buyBuffWithSol(userId, buffId, solPrice).catch(() => {});
+      economyApi.buyBuffWithPbp(userId, buffId, pbpPrice).catch(() => {});
     }
 
     return { ok: true };
@@ -416,7 +416,7 @@ export function useEconomy(): UseEconomyResult {
     addCoins,
     spendCoins,
     buyBuff,
-    buyBuffWithSol,
+    buyBuffWithPbp,
     consumeBuff,
     processRaceReward,
     updateMyStatsData,
